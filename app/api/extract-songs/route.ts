@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// 곡 정보 타입 정의
+interface Song {
+  title: string;
+  artist: string;
+}
+
 // OpenAI API 응답 타입 정의
 interface OpenAIResponse {
   id: string;
@@ -19,6 +25,19 @@ interface OpenAIResponse {
     completion_tokens: number;
     total_tokens: number;
   };
+}
+
+// OpenAI 응답에서 content로 파싱되는 JSON 타입
+interface ExtractSongsContent {
+  songs?: Song[];
+  playlist_title?: string;
+  data?: Song[]; // 혹시 data로 올 경우
+}
+
+function isSongArray(arr: unknown): arr is Song[] {
+  return Array.isArray(arr) && arr.every(
+    (song) => song && typeof song.title === 'string' && typeof song.artist === 'string'
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -75,9 +94,9 @@ export async function POST(req: NextRequest) {
     });
 
     const content = data.choices?.[0]?.message?.content ?? "{}";
-    let parsedContent: any = {};
+    let parsedContent: ExtractSongsContent = {};
     try {
-      parsedContent = JSON.parse(content);
+      parsedContent = JSON.parse(content) as ExtractSongsContent;
       console.log("[API] JSON 파싱 성공:", parsedContent);
     } catch (error) {
       console.error("[API] JSON 파싱 오류:", { content, error });
@@ -85,23 +104,26 @@ export async function POST(req: NextRequest) {
     }
 
     // songs 필드만 추출, 없으면 빈 배열 반환
-    let songs: any[] = [];
+    let songs: Song[] = [];
     let playlistTitle: string = "";
-    if (Array.isArray(parsedContent.songs)) {
+    if (isSongArray(parsedContent.songs)) {
       songs = parsedContent.songs;
-    } else if (Array.isArray(parsedContent.data)) {
+      if (typeof parsedContent.playlist_title === 'string') {
+        playlistTitle = parsedContent.playlist_title;
+      }
+    } else if (isSongArray(parsedContent.data)) {
       // 혹시 data 필드로 올 경우도 대비
       songs = parsedContent.data;
-    } else if (Array.isArray(parsedContent)) {
+      if (typeof parsedContent.playlist_title === 'string') {
+        playlistTitle = parsedContent.playlist_title;
+      }
+    } else if (isSongArray(parsedContent as unknown)) {
       // 혹시 배열만 올 경우
-      songs = parsedContent;
-    }
-    // playlist_title 추출
-    if (typeof parsedContent.playlist_title === 'string') {
-      playlistTitle = parsedContent.playlist_title;
+      songs = parsedContent as unknown as Song[];
+      // playlist_title은 없음
     }
     // 각 song 객체가 title, artist를 반드시 가지도록 보정
-    songs = songs.filter(song => song && typeof song.title === 'string' && typeof song.artist === 'string');
+    // songs = songs.filter((song: any): song is Song => song && typeof song.title === 'string' && typeof song.artist === 'string');
 
     return NextResponse.json({ songs, playlist_title: playlistTitle });
   } catch (error) {

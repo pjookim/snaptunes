@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// 곡 정보 타입 정의
+interface Song {
+  title: string;
+  artist: string;
+}
+
+// Spotify 트랙 아티스트 타입
+interface SpotifyArtist {
+  name: string;
+}
+
+// Spotify 트랙 앨범 이미지 타입
+interface SpotifyImage {
+  url: string;
+}
+
+// Spotify 트랙 타입
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  artists: SpotifyArtist[];
+  album: {
+    images: SpotifyImage[];
+  };
+}
+
+// Spotify Search API 응답 타입
+interface SpotifySearchResponse {
+  tracks?: {
+    items?: SpotifyTrack[];
+  };
+}
+
 export async function POST(req: NextRequest) {
-  const { songs, accessToken } = await req.json();
+  const { songs, accessToken }: { songs: Song[]; accessToken: string } = await req.json();
   if (!Array.isArray(songs) || !accessToken) {
     return NextResponse.json({ error: "잘못된 요청" }, { status: 400 });
   }
@@ -20,13 +53,13 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    const data = await res.json();
+    const data: SpotifySearchResponse = await res.json();
     const foundTrack = data.tracks?.items?.[0];
     if (foundTrack) {
       results.push({
         id: foundTrack.id,
         title: foundTrack.name,
-        artist: foundTrack.artists.map((a: any) => a.name).join(", "),
+        artist: foundTrack.artists.map((a) => a.name).join(", "),
         albumArt: foundTrack.album.images?.[0]?.url,
         found: true
       });
