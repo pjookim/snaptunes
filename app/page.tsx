@@ -63,7 +63,7 @@ export default function Home() {
             {spotifyToken && <span className="text-green-700 font-bold">Done</span>}
           </div>
           <p className="text-base text-neutral-700 mb-4 font-mono">You need to log in with your Spotify account to create a playlist.</p>
-          <Button onClick={handleSpotifyAuth} disabled={!!spotifyToken} className="w-full font-bold border-2 border-black shadow-[3px_3px_0_0_#222] bg-white text-black hover:bg-black hover:text-white transition">
+          <Button onClick={handleSpotifyAuth} disabled={!!spotifyToken} variant="neutral">
             {spotifyToken ? "Spotify Authenticated" : "Authenticate with Spotify"}
           </Button>
         </>
@@ -83,7 +83,6 @@ export default function Home() {
             <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={step !== 2} className="border-2 border-black rounded bg-white" />
           </div>
           <Textarea
-            className="mb-4 border-2 border-black rounded bg-white"
             rows={4}
             value={text}
             onChange={e => setText(e.target.value)}
@@ -108,7 +107,7 @@ export default function Home() {
                 ))}
               </ul>
               <Button
-                variant="neo"
+                variant="neutral"
                 className="mt-6 w-full"
                 onClick={() => goToStep(3)}
                 disabled={!isExtracted}
@@ -166,7 +165,7 @@ export default function Home() {
                 ))}
               </ul>
               <Button
-                variant="neo"
+                variant="neutral"
                 className="mt-6 w-full"
                 onClick={() => goToStep(4)}
                 disabled={!isSearched}
@@ -402,7 +401,7 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-16">
+    <main className="flex min-h-screen flex-col items-center justify-start py-8 px-4 md:py-16">
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center mb-8 max-w-32 mx-auto md:max-w-md">
           <Image src="/snaptunes_logo.png" alt="SnapTunes Logo" className="mb-2" width={200} height={200} />
@@ -410,13 +409,13 @@ export default function Home() {
         {/* Step Indicator & Navigation (카드 위) */}
         <div className="flex items-center justify-center gap-4 mb-8">
           <Button
-            variant="neo"
+            variant="default"
+            size="icon"
             onClick={() => goToStep(step - 1)}
             disabled={step === 1 || (!!spotifyToken && step > 1)}
             aria-label="Previous step"
-            className="flex items-center justify-center w-10 h-10 p-0"
           >
-            <ChevronLeft size={28} strokeWidth={3} />
+            <ChevronLeft size={32} strokeWidth={4} />
           </Button>
           <div className="flex gap-3">
             {[1, 2, 3, 4].map((s) => (
@@ -424,7 +423,7 @@ export default function Home() {
                 key={s}
                 className={
                   `w-6 h-6 flex items-center justify-center font-bold text-xs ` +
-                  `border-4 border-black shadow-[2px_2px_0_0_#222] ` +
+                  `border-4 border-black ` +
                   `rounded-none select-none transition ` +
                   (step === s
                     ? "bg-yellow-300 text-black scale-110"
@@ -437,7 +436,8 @@ export default function Home() {
             ))}
           </div>
           <Button
-            variant="neo"
+            variant="default"
+            size="icon"
             onClick={() => goToStep(step + 1)}
             disabled={
               step === stepCards.length ||
@@ -446,9 +446,8 @@ export default function Home() {
               (step === 3 && !isSearched)
             }
             aria-label="Next step"
-            className="flex items-center justify-center w-10 h-10 p-0"
           >
-            <ChevronRight size={28} strokeWidth={3} />
+            <ChevronRight size={32} strokeWidth={4} />
           </Button>
         </div>
         {/* 카드 애니메이션 */}
@@ -483,7 +482,7 @@ export default function Home() {
                       {spotifyToken && <span className="text-green-700 font-bold">Done</span>}
                     </div>
                     <p className="text-base text-neutral-700 mb-4 font-mono">You need to log in with your Spotify account to create a playlist.</p>
-                    <Button onClick={handleSpotifyAuth} disabled={!!spotifyToken} className="w-full font-bold border-2 border-black shadow-[3px_3px_0_0_#222] bg-white text-black hover:bg-black hover:text-white transition">
+                    <Button onClick={handleSpotifyAuth} disabled={!!spotifyToken} variant="neutral" className="w-full">
                       {spotifyToken ? "Spotify Authenticated" : "Authenticate with Spotify"}
                     </Button>
                   </>
@@ -499,7 +498,7 @@ export default function Home() {
                       <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={step !== 2} className="border-2 border-black rounded bg-white" />
                     </div>
                     <Textarea
-                      className="mb-4 border-2 border-black rounded bg-white"
+                      className="mb-4 bg-white"
                       rows={4}
                       value={text}
                       onChange={e => setText(e.target.value)}
@@ -507,9 +506,10 @@ export default function Home() {
                       disabled={step !== 2}
                     />
                     <Button
+                      variant="neutral"
                       onClick={async () => { await handleExtractSongs(); }}
                       disabled={isLoading || !text.trim() || step !== 2}
-                      className="w-full font-bold border-2 border-black shadow-[3px_3px_0_0_#222] bg-white text-black hover:bg-black hover:text-white transition"
+                      className="w-full"
                     >
                       {isLoading && step === 2 ? "Extracting..." : "Extract Song Titles"}
                     </Button>
@@ -524,7 +524,7 @@ export default function Home() {
                           ))}
                         </ul>
                         <Button
-                          variant="neo"
+                          variant="neutral"
                           className="mt-6 w-full"
                           onClick={() => goToStep(3)}
                           disabled={!isExtracted}
@@ -578,7 +578,7 @@ export default function Home() {
                           ))}
                         </ul>
                         <Button
-                          variant="neo"
+                          variant="neutral"
                           className="mt-6 w-full"
                           onClick={() => goToStep(4)}
                           disabled={!isSearched}
@@ -604,9 +604,10 @@ export default function Home() {
                       disabled={step !== 4}
                     />
                     <Button
+                      variant="neutral"
                       onClick={handleCreatePlaylist}
                       disabled={isLoading || !spotifyToken || spotifyTracks.filter(t => t.found && t.id && selectedTrackIds.includes(t.id)).length === 0 || step !== 4}
-                      className="w-full font-bold border-2 border-black shadow-[3px_3px_0_0_#222] bg-white text-black hover:bg-black hover:text-white transition"
+                      className="w-full"
                     >
                       {isLoading && step === 4 ? "Creating..." : "Create Spotify Playlist"}
                     </Button>
