@@ -412,7 +412,7 @@ export default function Home() {
             variant="default"
             size="icon"
             onClick={() => goToStep(step - 1)}
-            disabled={step === 1 || (!!spotifyToken && step > 1)}
+            disabled={step === 1 || step === 2}
             aria-label="Previous step"
           >
             <ChevronLeft size={32} strokeWidth={4} />
