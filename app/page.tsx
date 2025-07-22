@@ -140,15 +140,15 @@ export default function Home() {
                       <img src={track.albumArt} alt="album" className="w-10 h-10 rounded border-2 border-black shrink-0" />
                     )}
                     {/* 노래 정보 */}
-                    <div className="relative flex-1 min-w-0">
+                    <div className="relative flex-1 min-w-0 overflow-x-hidden whitespace-nowrap" style={{overflowX:'hidden', whiteSpace:'nowrap'}}>
                       <span className="font-bold text-black max-w-full inline-block truncate align-middle" style={{verticalAlign:'middle'}}>
                         {track.title}
                       </span>
                       <span className="text-gray-700 max-w-full inline-block truncate align-middle ml-1" style={{verticalAlign:'middle'}}>
                         - {track.artist}
                       </span>
-                      {/* 그라데이션 오버레이 */}
-                      <span className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, rgba(255,255,255,0), #bae6fd 80%)'}} />
+                      {/* 항상 표시되는 그라데이션 오버레이 */}
+                      <span className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, rgba(255,255,255,0), #bae6fd 80%)', pointerEvents: 'none'}} />
                     </div>
                     {/* 체크박스 or Not found 표시 (오른쪽 끝) */}
                     {track.found ? (
@@ -284,16 +284,35 @@ export default function Home() {
     window.location.href = "/api/auth/spotify";
   }
 
-  // 이미지 업로드 핸들러 (미구현)
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // 이미지 업로드 핸들러 (OCR 적용, tesseract.js를 동적 import)
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
+      setIsLoading(true);
+      setError(null);
+      try {
+        // 동적으로 tesseract.js import (클라이언트에서만)
+        const Tesseract = (await import('tesseract.js')).default;
+        const result = await Tesseract.recognize(
+          e.target.files[0],
+          'eng+kor'
+        );
+        const text = (result as any).data?.text ?? '';
+        setText(text); // 텍스트 입력란에 자동 입력
+        // 2. 기존 곡명 추출 함수 호출
+        await handleExtractSongs(text);
+      } catch (err) {
+        setError("이미지에서 텍스트를 추출하는 데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   }
 
-  // 곡명 추출
-  async function handleExtractSongs() {
-    if (!text.trim()) {
+  // 곡명 추출 (ocrText 인자 허용)
+  async function handleExtractSongs(overrideText?: string) {
+    const inputText = overrideText ?? text;
+    if (!inputText.trim()) {
       setError("Please enter text.");
       return;
     }
@@ -305,7 +324,7 @@ export default function Home() {
     setSelectedTrackIds([]);
     setIsExtracted(false);
     try {
-      const { songs, playlist_title } = await extractSongTitlesFromText(text);
+      const { songs, playlist_title } = await extractSongTitlesFromText(inputText);
       setOcrResult(songs);
       setIsExtracted(true);
       if (playlist_title && playlist_title.trim()) {
@@ -425,7 +444,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-start py-8 px-4 md:py-16">
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center mb-8 max-w-32 mx-auto md:max-w-md">
-          <Image src="/snaptunes_logo.png" alt="SnapTunes Logo" className="mb-2" width={200} height={200} />
+          <Image src="/snaptunes_logo.png" alt="SnapTunes Logo" className="mb-2" width={200} height={200} priority />
         </div>
         {/* Step Indicator & Navigation (카드 위) */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -526,14 +545,26 @@ export default function Home() {
                       placeholder="Enter song titles and artists (one per line)"
                       disabled={step !== 2}
                     />
-                    <Button
-                      variant="neutral"
-                      onClick={async () => { await handleExtractSongs(); }}
-                      disabled={isLoading || !text.trim() || step !== 2}
-                      className="w-full"
-                    >
-                      {isLoading && step === 2 ? "Extracting..." : "Extract Song Titles"}
-                    </Button>
+                    {ocrResult.length === 0 && !isLoading && step === 2 && text.trim() && (
+                      <div className="mt-4 text-center text-sm text-neutral-600 font-mono">
+                        No songs could be extracted. Please try a different text or upload a clearer image.
+                      </div>
+                    )}
+                    {isLoading && step === 2 ? (
+                      <div className="w-full">
+                        <Progress value={70} className="w-full h-6 border-4 border-black rounded-none shadow-[2px_2px_0_0_#222] bg-yellow-200" />
+                        <div className="text-center text-xs font-bold mt-1 text-black" style={{textShadow:'1px 1px 0 #fff'}}>Loading...</div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="neutral"
+                        onClick={async () => { await handleExtractSongs(); }}
+                        disabled={isLoading || !text.trim() || step !== 2}
+                        className="w-full"
+                      >
+                        Extract Song Titles
+                      </Button>
+                    )}
                     {ocrResult.length > 0 && (
                       <>
                         <ul className="mt-4 space-y-1 text-base">
@@ -573,15 +604,15 @@ export default function Home() {
                                 <img src={track.albumArt} alt="album" className="w-10 h-10 rounded border-2 border-black shrink-0" />
                               )}
                               {/* 노래 정보 */}
-                              <div className="relative flex-1 min-w-0">
+                              <div className="relative flex-1 min-w-0 overflow-x-hidden whitespace-nowrap" style={{overflowX:'hidden', whiteSpace:'nowrap'}}>
                                 <span className="font-bold text-black max-w-full inline-block truncate align-middle" style={{verticalAlign:'middle'}}>
                                   {track.title}
                                 </span>
                                 <span className="text-gray-700 max-w-full inline-block truncate align-middle ml-1" style={{verticalAlign:'middle'}}>
                                   - {track.artist}
                                 </span>
-                                {/* 그라데이션 오버레이 */}
-                                <span className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, rgba(255,255,255,0), #bae6fd 80%)'}} />
+                                {/* 항상 표시되는 그라데이션 오버레이 */}
+                                <span className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, rgba(255,255,255,0), #bae6fd 80%)', pointerEvents: 'none'}} />
                               </div>
                               {/* 체크박스 or Not found 표시 (오른쪽 끝) */}
                               {track.found ? (
