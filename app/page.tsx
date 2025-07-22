@@ -10,6 +10,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Progress } from "../components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 function getAccessTokenFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -79,7 +80,7 @@ export default function Home() {
             <span className="font-bold text-xl tracking-wider">2. Enter Song Titles / Artists</span>
             {ocrResult.length > 0 && <span className="text-green-700 font-bold">Done</span>}
           </div>
-          <p className="text-base text-neutral-700 mb-4 font-mono">Upload an image (not implemented) or enter song titles/artists directly.</p>
+          <p className="text-base text-neutral-700 mb-4 font-mono">Upload an image or enter song titles/artists directly.</p>
           <div className="mb-4">
             <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={step !== 2} className="border-2 border-black rounded bg-white" />
           </div>
@@ -297,7 +298,10 @@ export default function Home() {
           e.target.files[0],
           'eng+kor'
         );
-        const text = (result as any).data?.text ?? '';
+        // According to @types/tesseract.js, result is a Tesseract.TesseractJob, but with async/await, we need to use the callback or wrap in a Promise.
+        // However, in practice, tesseract.js >=2.1.0 returns a Promise<{ data: { text: string } }> when using the default import and await.
+        // So, let's type result as { data: { text: string } }
+        const text: string = (result as { data: { text: string } }).data?.text ?? '';
         setText(text); // 텍스트 입력란에 자동 입력
         // 2. 기존 곡명 추출 함수 호출
         await handleExtractSongs(text);
@@ -327,6 +331,9 @@ export default function Home() {
       const { songs, playlist_title } = await extractSongTitlesFromText(inputText);
       setOcrResult(songs);
       setIsExtracted(true);
+      if (songs.length === 0) {
+        toast.warning('No songs could be extracted. Please try a different text or upload a clearer image.');
+      }
       if (playlist_title && playlist_title.trim()) {
         setPlaylistName(playlist_title.trim());
       } else {
@@ -533,7 +540,7 @@ export default function Home() {
                       <span className="font-bold text-xl tracking-wider">2. Enter Song Titles / Artists</span>
                       {ocrResult.length > 0 && <span className="text-green-700 font-bold">Done</span>}
                     </div>
-                    <p className="text-base text-neutral-700 mb-4 font-mono">Upload an image (not implemented) or enter song titles/artists directly.</p>
+                    <p className="text-base text-neutral-700 mb-4 font-mono">Upload an image or enter song titles/artists directly.</p>
                     <div className="mb-4">
                       <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={step !== 2} className="border-2 border-black rounded bg-white" />
                     </div>
@@ -545,11 +552,6 @@ export default function Home() {
                       placeholder="Enter song titles and artists (one per line)"
                       disabled={step !== 2}
                     />
-                    {ocrResult.length === 0 && !isLoading && step === 2 && text.trim() && (
-                      <div className="mt-4 text-center text-sm text-neutral-600 font-mono">
-                        No songs could be extracted. Please try a different text or upload a clearer image.
-                      </div>
-                    )}
                     {isLoading && step === 2 ? (
                       <div className="w-full">
                         <Progress value={70} className="w-full h-6 border-4 border-black rounded-none shadow-[2px_2px_0_0_#222] bg-yellow-200" />

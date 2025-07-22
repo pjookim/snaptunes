@@ -61,7 +61,17 @@ export async function POST(req: NextRequest) {
 
     console.log("[API] OpenAI API 호출 시작", { textLength: text.length });
 
-    const prompt = `아래 텍스트에서 곡명과 아티스트를 추출해서 반드시 아래와 같은 JSON 오브젝트로만 반환해줘.\n{\n  \"songs\": [ { \"title\": \"곡명\", \"artist\": \"아티스트\" } ],\n  \"playlist_title\": \"이 곡 리스트에 어울리는 플레이리스트 제목(추천)\"\n}\n아티스트가 명확하지 않으면 \"artist\"는 빈 문자열로 해줘. 만약 적절한 플레이리스트 제목을 추천하기 어렵다면 playlist_title은 빈 문자열로 해줘.\n텍스트:\n${text}`;
+    const prompt = `Extract song titles and artists from the text below and return ONLY a JSON object in the following format:
+{
+  "songs": [ { "title": "Song Title", "artist": "Artist" } ],
+  "playlist_title": "A recommended playlist title for this list of songs"
+}
+- Only include songs where the "title" is a non-empty string (do not include songs with empty or whitespace-only titles).
+- If the artist is not clear, set "artist" to an empty string.
+- If it is difficult to recommend a suitable playlist title, set "playlist_title" to an empty string.
+- The response must be a valid JSON object and nothing else.
+Text:
+${text}`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
