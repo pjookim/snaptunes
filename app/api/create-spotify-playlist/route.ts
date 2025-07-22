@@ -44,5 +44,17 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ uris })
   });
 
-  return NextResponse.json({ playlistUrl: playlist.external_urls.spotify });
+  // 4. 플레이리스트 상세 정보 조회 (cover, name, owner 등)
+  const playlistDetailRes = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const playlistDetail = await playlistDetailRes.json();
+
+  return NextResponse.json({
+    playlistUrl: playlist.external_urls.spotify,
+    cover: playlistDetail.images?.[0]?.url || null,
+    name: playlistDetail.name,
+    ownerName: playlistDetail.owner?.display_name || playlistDetail.owner?.id || "",
+    ownerUrl: playlistDetail.owner?.external_urls?.spotify || null
+  });
 } 

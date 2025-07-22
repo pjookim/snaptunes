@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { extractSongTitlesFromText, SongInfo } from "./ocr";
-import { searchSongsInSpotify, createSpotifyPlaylist, SpotifyTrack } from "./spotify-api";
+import { searchSongsInSpotify, createSpotifyPlaylist, SpotifyTrack, CreatedPlaylistInfo } from "./spotify-api";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -38,6 +38,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [playlistName, setPlaylistName] = useState("SnapTunes Playlist");
   const [step, setStep] = useState<Step>(1);
+  const [playlistMeta, setPlaylistMeta] = useState<CreatedPlaylistInfo | null>(null);
 
   // 카드 애니메이션 상태
   const [reveal, setReveal] = useState(false);
@@ -202,10 +203,26 @@ export default function Home() {
             {isLoading && step === 4 ? "Creating..." : "Create Spotify Playlist"}
           </Button>
           {playlistUrl && (
-            <div className="mt-4">
-              <a href={playlistUrl} target="_blank" rel="noopener noreferrer" className="underline text-blue-600 font-bold">
-                View Playlist
-              </a>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              {playlistMeta?.cover && (
+                <a href={playlistMeta.playlistUrl || playlistUrl} target="_blank" rel="noopener noreferrer">
+                  <img src={playlistMeta.cover} alt="Playlist Cover" className="w-32 h-32 rounded shadow border-2 border-black mb-2" />
+                </a>
+              )}
+              <div className="text-lg font-bold text-center">
+                <a href={playlistMeta?.playlistUrl || playlistUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {playlistMeta?.name || playlistName}
+                </a>
+              </div>
+              <div className="text-sm text-neutral-700 text-center">
+                by {playlistMeta?.ownerUrl ? (
+                  <a href={playlistMeta.ownerUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                    {playlistMeta.ownerName}
+                  </a>
+                ) : (
+                  playlistMeta?.ownerName
+                )}
+              </div>
             </div>
           )}
         </>
@@ -367,9 +384,13 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setPlaylistUrl(null);
+    setPlaylistMeta(null);
     try {
-      const url = await createSpotifyPlaylist(foundTracks, spotifyToken, playlistName || "SnapTunes Playlist");
-      setPlaylistUrl(url);
+      const meta = await createSpotifyPlaylist(foundTracks, spotifyToken, playlistName || "SnapTunes Playlist");
+      if (meta) {
+        setPlaylistUrl(meta.playlistUrl);
+        setPlaylistMeta(meta);
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to create playlist.");
     } finally {
@@ -612,10 +633,26 @@ export default function Home() {
                       {isLoading && step === 4 ? "Creating..." : "Create Spotify Playlist"}
                     </Button>
                     {playlistUrl && (
-                      <div className="mt-4">
-                        <a href={playlistUrl} target="_blank" rel="noopener noreferrer" className="underline text-blue-600 font-bold">
-                          View Playlist
-                        </a>
+                      <div className="mt-4 flex flex-col items-center gap-2">
+                        {playlistMeta?.cover && (
+                          <a href={playlistMeta.playlistUrl || playlistUrl} target="_blank" rel="noopener noreferrer">
+                            <img src={playlistMeta.cover} alt="Playlist Cover" className="w-32 h-32 rounded shadow border-2 border-black mb-2" />
+                          </a>
+                        )}
+                        <div className="text-lg font-bold text-center">
+                          <a href={playlistMeta?.playlistUrl || playlistUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {playlistMeta?.name || playlistName}
+                          </a>
+                        </div>
+                        <div className="text-sm text-neutral-700 text-center">
+                          by {playlistMeta?.ownerUrl ? (
+                            <a href={playlistMeta.ownerUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                              {playlistMeta.ownerName}
+                            </a>
+                          ) : (
+                            playlistMeta?.ownerName
+                          )}
+                        </div>
                       </div>
                     )}
                   </>

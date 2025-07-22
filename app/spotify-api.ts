@@ -18,12 +18,27 @@ export async function searchSongsInSpotify(songs: SongInfo[], accessToken: strin
   return data.results ?? [];
 }
 
-export async function createSpotifyPlaylist(tracks: string[], accessToken: string, playlistName: string): Promise<string | null> {
+export interface CreatedPlaylistInfo {
+  playlistUrl: string | null;
+  cover: string | null;
+  name: string;
+  ownerName: string;
+  ownerUrl: string | null;
+}
+
+export async function createSpotifyPlaylist(tracks: string[], accessToken: string, playlistName: string): Promise<CreatedPlaylistInfo | null> {
   const res = await fetch("/api/create-spotify-playlist", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tracks, accessToken, playlistName })
   });
   const data = await res.json();
-  return data.playlistUrl ?? null;
+  if (!data.playlistUrl) return null;
+  return {
+    playlistUrl: data.playlistUrl,
+    cover: data.cover || null,
+    name: data.name || "",
+    ownerName: data.ownerName || "",
+    ownerUrl: data.ownerUrl || null
+  };
 } 
