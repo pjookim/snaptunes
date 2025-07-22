@@ -7,6 +7,7 @@ export interface SongInfo {
 
 export interface APIResponse {
   songs?: SongInfo[];
+  playlist_title?: string;
   error?: string;
 }
 
@@ -18,7 +19,7 @@ export async function extractSongTitlesFromImage(image: File): Promise<SongInfo[
   ];
 }
 
-export async function extractSongTitlesFromText(text: string): Promise<SongInfo[]> {
+export async function extractSongTitlesFromText(text: string): Promise<{ songs: SongInfo[]; playlist_title: string }> {
   console.log("[Client] 곡명 추출 요청 시작", { textLength: text.length });
 
   try {
@@ -47,10 +48,11 @@ export async function extractSongTitlesFromText(text: string): Promise<SongInfo[
 
     console.log("[Client] 곡명 추출 성공:", { 
       songCount: data.songs.length,
-      songs: data.songs 
+      songs: data.songs,
+      playlist_title: data.playlist_title
     });
 
-    return data.songs;
+    return { songs: data.songs, playlist_title: data.playlist_title || "" };
   } catch (error) {
     console.error("[Client] 곡명 추출 오류:", error);
     throw error;

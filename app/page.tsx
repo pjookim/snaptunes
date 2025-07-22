@@ -289,9 +289,19 @@ export default function Home() {
     setSelectedTrackIds([]);
     setIsExtracted(false);
     try {
-      const songs = await extractSongTitlesFromText(text);
+      const { songs, playlist_title } = await extractSongTitlesFromText(text);
       setOcrResult(songs);
       setIsExtracted(true);
+      if (playlist_title && playlist_title.trim()) {
+        setPlaylistName(playlist_title.trim());
+      } else {
+        // 오늘 날짜 기반 기본 이름
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        setPlaylistName(`SnapTunes Playlist (${yyyy}-${mm}-${dd})`);
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to extract song titles.");
     } finally {

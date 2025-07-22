@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     console.log("[API] OpenAI API 호출 시작", { textLength: text.length });
 
-    const prompt = `아래 텍스트에서 곡명과 아티스트를 추출해서 반드시 아래와 같은 JSON 오브젝트로만 반환해줘.\n{\n  \"songs\": [ { \"title\": \"곡명\", \"artist\": \"아티스트\" } ]\n}\n아티스트가 명확하지 않으면 \"artist\"는 빈 문자열로 해줘.\n텍스트:\n${text}`;
+    const prompt = `아래 텍스트에서 곡명과 아티스트를 추출해서 반드시 아래와 같은 JSON 오브젝트로만 반환해줘.\n{\n  \"songs\": [ { \"title\": \"곡명\", \"artist\": \"아티스트\" } ],\n  \"playlist_title\": \"이 곡 리스트에 어울리는 플레이리스트 제목(추천)\"\n}\n아티스트가 명확하지 않으면 \"artist\"는 빈 문자열로 해줘. 만약 적절한 플레이리스트 제목을 추천하기 어렵다면 playlist_title은 빈 문자열로 해줘.\n텍스트:\n${text}`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
 
     // songs 필드만 추출, 없으면 빈 배열 반환
     let songs: any[] = [];
+    let playlistTitle: string = "";
     if (Array.isArray(parsedContent.songs)) {
       songs = parsedContent.songs;
     } else if (Array.isArray(parsedContent.data)) {
@@ -95,11 +96,14 @@ export async function POST(req: NextRequest) {
       // 혹시 배열만 올 경우
       songs = parsedContent;
     }
-
+    // playlist_title 추출
+    if (typeof parsedContent.playlist_title === 'string') {
+      playlistTitle = parsedContent.playlist_title;
+    }
     // 각 song 객체가 title, artist를 반드시 가지도록 보정
     songs = songs.filter(song => song && typeof song.title === 'string' && typeof song.artist === 'string');
 
-    return NextResponse.json({ songs });
+    return NextResponse.json({ songs, playlist_title: playlistTitle });
   } catch (error) {
     console.error("[API] 처리 중 오류 발생:", error);
     return NextResponse.json(
