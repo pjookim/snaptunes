@@ -25,6 +25,12 @@ export const metadata: Metadata = {
     description: 'Create playlists instantly from images or text using SnapTunes.',
     type: 'website',
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+    other: {
+      'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION as string
+    }
+  }
 };
 
 export default function RootLayout({
