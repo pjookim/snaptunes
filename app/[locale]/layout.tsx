@@ -4,6 +4,8 @@ import { routing } from '@/i18n/routing';
 import { Toaster } from '@/components/ui/sonner';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +19,32 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
+export async function generateMetadata({
+  params, }: {
+    params: { locale: string }
+  }
+): Promise<Metadata> {
+  const locale = params.locale
+
+  const t = await getTranslations({ locale, namespace: 'app' });
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    keywords: t('keywords'),
+    metadataBase: new URL('https://snaptunes.vercel.app'),
+    alternates: {
+      canonical: '/',
+      languages: {
+        'en': '/en',
+        'ko': '/ko',
+      }
+    },
+    openGraph: {
+      images: '/opengraph-image.png'
+    }
+  }
+}
 
 export default async function LocaleLayout({
   children,
