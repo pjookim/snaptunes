@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 interface SpotifyTrack {
   id: string
@@ -53,10 +54,12 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
               >
                 {/* 앨범 커버 */}
                 {track.albumArt && (
-                  <img
+                  <Image
+                  width={48}
+                  height={48}
                     src={track.albumArt}
                     alt={t('common.album')}
-                    className="w-10 h-10 rounded border-2 border-black shrink-0"
+                    className="w-12 h-12 rounded border-2 border-black shrink-0 p-0.5"
                   />
                 )}
                 {/* 노래 정보 */}

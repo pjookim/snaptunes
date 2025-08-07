@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
-import { extractSongTitlesFromText, SongInfo } from '../ocr'
 import {
   searchSongsInSpotify,
   createSpotifyPlaylist,
@@ -22,24 +21,13 @@ import Step1AuthCard from '@/components/Step1AuthCard'
 import Step2OcrCard from '@/components/Step2OcrCard'
 import Step3SearchCard from '@/components/Step3SearchCard'
 import Step4PlaylistCard from '@/components/Step4PlaylistCard'
-
-type SavedState = {
-  step: number
-  text: string
-  ocrResult: SongInfo[]
-  spotifyTracks: SpotifyTrack[]
-  selectedTrackIds: string[]
-  playlistName: string
-  isExtracted: boolean
-  isSearched: boolean
-  spotifyUser: {
-    id: string
-    displayName: string
-    email: string
-    imageUrl?: string
-  } | null
-  timestamp: number
-}
+import { refreshSpotifyToken, getSpotifyUserInfo } from '@/lib/api/spotify'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
+import { useOcrState } from '@/hooks/useOcrState'
+import { useStepState } from '@/hooks/useStepState'
+import { useDarkMode } from '@/hooks/useDarkMode'
+import { useCardAnimation } from '@/hooks/useCardAnimation'
+import { NEO_CARD_COLORS } from '@/lib/constants/neo-color'
 
 function getAccessTokenFromUrl(): string | null {
   if (typeof window === 'undefined') return null
@@ -61,28 +49,6 @@ function setStepInUrl(step: number) {
   const url = new URL(window.location.href)
   url.searchParams.set('step', step.toString())
   window.history.replaceState({}, document.title, url.toString())
-}
-
-// localStorage에 상태 저장하기
-function saveStateToStorage(state: SavedState) {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem('snaptunes_state', JSON.stringify(state))
-  } catch (error) {
-    console.warn('Failed to save state to localStorage:', error)
-  }
-}
-
-// localStorage에서 상태 복원하기
-function loadStateFromStorage() {
-  if (typeof window === 'undefined') return null
-  try {
-    const saved = localStorage.getItem('snaptunes_state')
-    return saved ? JSON.parse(saved) : null
-  } catch (error) {
-    console.warn('Failed to load state from localStorage:', error)
-    return null
-  }
 }
 
 // Spotify 토큰 관련 함수들
@@ -125,154 +91,53 @@ function clearSpotifyTokens() {
   }
 }
 
-// 토큰 갱신 함수
-async function refreshSpotifyToken(refreshToken: string): Promise<{
-  accessToken: string
-  refreshToken: string
-  expiresIn: number
-} | null> {
-  try {
-    const response = await fetch('/api/auth/spotify/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to refresh token')
-    }
-
-    const data = await response.json()
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token || refreshToken,
-      expiresIn: data.expires_in,
-    }
-  } catch (error) {
-    console.error('Token refresh failed:', error)
-    return null
-  }
-}
-
-// 안전한 토큰 가져오기 (필요시 갱신) - setSpotifyToken 콜백을 받음
-async function getValidSpotifyToken(
-  setTokenCallback?: (token: string | null) => void,
-): Promise<string | null> {
-  const savedTokens = loadSpotifyTokens()
-  if (!savedTokens || !savedTokens.accessToken || !savedTokens.refreshToken) {
-    return null
-  }
-
-  const now = Date.now()
-
-  // 토큰이 아직 유효한지 확인 (5분 여유)
-  if (savedTokens.expiresAt > now + 5 * 60 * 1000) {
-    return savedTokens.accessToken
-  }
-
-  // 토큰 갱신 시도
-  const refreshed = await refreshSpotifyToken(savedTokens.refreshToken)
-  if (refreshed) {
-    const newExpiresAt = Date.now() + refreshed.expiresIn * 1000
-    saveSpotifyTokens(
-      refreshed.accessToken,
-      refreshed.refreshToken,
-      newExpiresAt,
-    )
-    if (setTokenCallback) {
-      setTokenCallback(refreshed.accessToken)
-    }
-    return refreshed.accessToken
-  } else {
-    // 갱신 실패: 저장된 토큰 삭제
-    clearSpotifyTokens()
-    if (setTokenCallback) {
-      setTokenCallback(null)
-    }
-    return null
-  }
-}
-
-// Spotify 사용자 정보 가져오기
-async function getSpotifyUserInfo(accessToken: string): Promise<{
-  id: string
-  displayName: string
-  email: string
-  imageUrl?: string
-} | null> {
-  try {
-    const response = await fetch('https://api.spotify.com/v1/me', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch user info')
-    }
-
-    const userData = await response.json()
-    return {
-      id: userData.id,
-      displayName: userData.display_name,
-      email: userData.email,
-      imageUrl: userData.images?.[0]?.url,
-    }
-  } catch (error) {
-    console.error('Failed to get Spotify user info:', error)
-    return null
-  }
-}
-
-type Step = number
-
-const CARD_COLORS = [
-  '#fde047', // yellow-200
-  '#f9a8d4', // pink-200
-  '#bae6fd', // blue-200
-  '#d9f99d', // lime-200
-]
-
 export default function Home() {
   const t = useTranslations()
   const searchParams = useSearchParams()
-  const [image, setImage] = useState<File | null>(null)
-  const [text, setText] = useState('')
-  const [ocrResult, setOcrResult] = useState<SongInfo[]>([])
-  const [spotifyToken, setSpotifyToken] = useState<string | null>(null)
+  const {
+    image,
+    setImage,
+    text,
+    setText,
+    ocrResult,
+    setOcrResult,
+    isExtracted,
+    setIsExtracted,
+    isLoading,
+    setIsLoading,
+    handleImageUpload,
+    handleExtractSongs,
+  } = useOcrState(t)
+  const {
+    spotifyToken,
+    setSpotifyToken,
+    spotifyUser,
+    setSpotifyUser,
+    getValidSpotifyToken,
+    handleSpotifyAuth,
+    handleSpotifyLogout,
+  } = useSpotifyAuth()
   const [spotifyTracks, setSpotifyTracks] = useState<SpotifyTrack[]>([])
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([])
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [playlistName, setPlaylistName] = useState(t('defaults.playlistName'))
-  const [step, setStep] = useState<Step>(() => getStepFromUrl())
+  const [isSearched, setIsSearched] = useState(false)
+  const { step, setStep, goToStep } = useStepState({
+    spotifyToken,
+    isExtracted,
+    isSearched,
+    t,
+    setIsExtracted,
+    setIsSearched,
+  })
   const [playlistMeta, setPlaylistMeta] = useState<CreatedPlaylistInfo | null>(
     null,
   )
-  const [spotifyUser, setSpotifyUser] = useState<{
-    id: string
-    displayName: string
-    email: string
-    imageUrl?: string
-  } | null>(null)
-
-  // 카드 애니메이션 상태
-  const [reveal, setReveal] = useState(false)
-  const [cardColor, setCardColor] = useState(CARD_COLORS[0])
-  const [pendingColor, setPendingColor] = useState(CARD_COLORS[0])
-  const [contentIdx, setContentIdx] = useState(0)
-  const [pendingIdx, setPendingIdx] = useState(0)
-  const [cardHeight, setCardHeight] = useState(260)
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  // 단계별 상태
-  const [isExtracted, setIsExtracted] = useState(false)
-  const [isSearched, setIsSearched] = useState(false)
 
   // 카드 내용 정의
   const stepCards = [
     {
-      color: CARD_COLORS[0],
+      color: NEO_CARD_COLORS[0],
       content: (
         <Step1AuthCard
           t={t}
@@ -286,7 +151,7 @@ export default function Home() {
       minHeight: 260,
     },
     {
-      color: CARD_COLORS[1],
+      color: NEO_CARD_COLORS[1],
       content: (
         <Step2OcrCard
           t={t}
@@ -304,7 +169,7 @@ export default function Home() {
       minHeight: 340,
     },
     {
-      color: CARD_COLORS[2],
+      color: NEO_CARD_COLORS[2],
       content: (
         <Step3SearchCard
           t={t}
@@ -319,7 +184,7 @@ export default function Home() {
       minHeight: 340,
     },
     {
-      color: CARD_COLORS[3],
+      color: NEO_CARD_COLORS[3],
       content: (
         <Step4PlaylistCard
           t={t}
@@ -338,22 +203,23 @@ export default function Home() {
       minHeight: 220,
     },
   ]
+  const {
+    reveal,
+    cardColor,
+    pendingColor,
+    contentIdx,
+    pendingIdx,
+    cardHeight,
+    contentRef,
+    setCardHeight,
+  } = useCardAnimation(step, stepCards)
 
   // Inkdrop 애니메이션: 카드 내용은 바뀌지 않고, 위에 원이 퍼진 뒤 내용/색/높이 변경
   useEffect(() => {
     if (contentIdx === step - 1) return
-    setPendingColor(stepCards[step - 1].color)
-    setPendingIdx(step - 1)
-    setCardColor(stepCards[step - 1].color)
-    setContentIdx(step - 1)
     setCardHeight(stepCards[step - 1].minHeight)
-    setReveal(false)
-    const timeout1 = setTimeout(() => {
-      setReveal(true)
-    }, 40)
-    const timeout2 = setTimeout(() => {
-      setReveal(false) // 원을 다시 숨김
-    }, 640)
+    const timeout1 = setTimeout(() => {}, 40)
+    const timeout2 = setTimeout(() => {}, 640)
     return () => {
       clearTimeout(timeout1)
       clearTimeout(timeout2)
@@ -435,54 +301,6 @@ export default function Home() {
     setStepInUrl(step)
   }, [step])
 
-  // 중요 상태 변경 시 localStorage에 저장
-  useEffect(() => {
-    const stateToSave: SavedState = {
-      step,
-      text,
-      ocrResult,
-      spotifyTracks,
-      selectedTrackIds,
-      playlistName,
-      isExtracted,
-      isSearched,
-      spotifyUser,
-      timestamp: Date.now(),
-    }
-    saveStateToStorage(stateToSave)
-  }, [
-    step,
-    text,
-    ocrResult,
-    spotifyTracks,
-    selectedTrackIds,
-    playlistName,
-    isExtracted,
-    isSearched,
-    spotifyUser,
-  ])
-
-  // 컴포넌트 마운트 시 localStorage에서 상태 복원
-  useEffect(() => {
-    const savedState = loadStateFromStorage()
-    if (savedState && savedState.timestamp) {
-      // 1시간 이내의 저장된 상태만 복원
-      const oneHour = 60 * 60 * 1000
-      if (Date.now() - savedState.timestamp < oneHour) {
-        if (savedState.step) setStep(savedState.step)
-        if (savedState.text) setText(savedState.text)
-        if (savedState.ocrResult) setOcrResult(savedState.ocrResult)
-        if (savedState.spotifyTracks) setSpotifyTracks(savedState.spotifyTracks)
-        if (savedState.selectedTrackIds)
-          setSelectedTrackIds(savedState.selectedTrackIds)
-        if (savedState.playlistName) setPlaylistName(savedState.playlistName)
-        if (savedState.isExtracted) setIsExtracted(savedState.isExtracted)
-        if (savedState.isSearched) setIsSearched(savedState.isSearched)
-        if (savedState.spotifyUser) setSpotifyUser(savedState.spotifyUser)
-      }
-    }
-  }, [])
-
   // Spotify 토큰이 설정될 때 사용자 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -496,93 +314,6 @@ export default function Home() {
 
     fetchUserInfo()
   }, [spotifyToken])
-
-  // 인증 완료 시 자동 이동은 제거 - 사용자가 직접 선택하도록 함
-
-  // Spotify 인증 시작
-  function handleSpotifyAuth() {
-    window.location.href = '/api/auth/spotify'
-  }
-
-  // Spotify 로그아웃
-  function handleSpotifyLogout() {
-    clearSpotifyTokens()
-    setSpotifyToken(null)
-    setSpotifyUser(null)
-    setSpotifyTracks([])
-    setSelectedTrackIds([])
-    setPlaylistUrl(null)
-    setPlaylistMeta(null)
-    setIsExtracted(false)
-    setIsSearched(false)
-    setStep(1)
-    toast.success(t('common.loggedOut'))
-  }
-
-  // 이미지 업로드 핸들러 (OCR 적용, tesseract.js를 동적 import)
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0])
-      setIsLoading(true)
-      try {
-        // 동적으로 tesseract.js import (클라이언트에서만)
-        const Tesseract = (await import('tesseract.js')).default
-        const result = await Tesseract.recognize(e.target.files[0], 'eng+kor')
-        // According to @types/tesseract.js, result is a Tesseract.TesseractJob, but with async/await, we need to use the callback or wrap in a Promise.
-        // However, in practice, tesseract.js >=2.1.0 returns a Promise<{ data: { text: string } }> when using the default import and await.
-        // So, let's type result as { data: { text: string } }
-        const text: string =
-          (result as { data: { text: string } }).data?.text ?? ''
-        setText(text) // 텍스트 입력란에 자동 입력
-        // 2. 기존 곡명 추출 함수 호출
-        await handleExtractSongs(text)
-      } catch (err) {
-        toast.error(t('errors.imageExtractionFailed'))
-      } finally {
-        setIsLoading(false)
-      }
-    }
-  }
-
-  // 곡명 추출 (ocrText 인자 허용)
-  async function handleExtractSongs(overrideText?: string) {
-    const inputText = overrideText ?? text
-    if (!inputText.trim()) {
-      toast.error(t('errors.enterText'))
-      return
-    }
-    setIsLoading(true)
-    setOcrResult([])
-    setSpotifyTracks([])
-    setPlaylistUrl(null)
-    setSelectedTrackIds([])
-    setIsExtracted(false)
-    try {
-      const { songs, playlist_title } =
-        await extractSongTitlesFromText(inputText)
-      setOcrResult(songs)
-      setIsExtracted(true)
-      if (songs.length === 0) {
-        toast.warning(t('errors.noSongsExtracted'))
-      }
-      if (playlist_title && playlist_title.trim()) {
-        setPlaylistName(playlist_title.trim())
-      } else {
-        // 오늘 날짜 기반 기본 이름
-        const today = new Date()
-        const yyyy = today.getFullYear()
-        const mm = String(today.getMonth() + 1).padStart(2, '0')
-        const dd = String(today.getDate()).padStart(2, '0')
-        setPlaylistName(`${t('defaults.playlistName')} (${yyyy}-${mm}-${dd})`)
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t('errors.extractionFailed'),
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   // Spotify에서 곡 검색
   async function handleSearchSpotify() {
@@ -671,56 +402,7 @@ export default function Home() {
     }
   }
 
-  // Step 이동 함수
-  function goToStep(target: number) {
-    const next = Math.max(1, Math.min(4, target))
-
-    // step 1로 이동하는 경우는 항상 허용
-    if (next === 1) {
-      setStep(next)
-      return
-    }
-
-    // 단계별 진행 조건 체크 (step 1로 이동하는 경우 제외)
-    if (next > 1 && !spotifyToken) {
-      toast.error(t('errors.authenticateFirst'))
-      return
-    }
-    if (next > 2 && !isExtracted) {
-      toast.error(t('errors.extractFirst'))
-      return
-    }
-    if (next > 3 && !isSearched) {
-      toast.error(t('errors.searchFirst'))
-      return
-    }
-
-    setStep(next)
-    // 상태 초기화는 해당 단계가 아닐 때만
-    if (next < 2) setIsExtracted(false)
-    if (next < 3) setIsSearched(false)
-  }
-
-  // 다크모드 상태 감지
-  const [isDark, setIsDark] = useState(false)
-  useEffect(() => {
-    const checkDark = () => {
-      if (typeof window !== 'undefined') {
-        setIsDark(document.documentElement.classList.contains('dark'))
-      }
-    }
-    checkDark()
-    window.addEventListener('storage', checkDark)
-    const observer = new MutationObserver(checkDark)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-    return () => {
-      window.removeEventListener('storage', checkDark)
-      observer.disconnect()
-    }
-  }, [])
+  const { isDark } = useDarkMode()
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start py-4 px-4">
@@ -828,7 +510,7 @@ export default function Home() {
               {stepCards[contentIdx].content}
               {/* Neo-brutalism Progress Bar (2,3단계 로딩 중) */}
               {isLoading && (step === 2 || step === 3) && (
-                <div className="absolute left-0 right-0 bottom-0 px-8 pb-8 z-40">
+                <div className="w-full py-2 z-40">
                   <Progress
                     value={70}
                     className="w-full h-6 border-4 border-black rounded-none shadow-[2px_2px_0_0_#222] bg-yellow-200"

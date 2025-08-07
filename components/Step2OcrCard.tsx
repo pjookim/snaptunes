@@ -2,7 +2,6 @@ import React from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 
 interface SongInfo {
   title: string
@@ -66,20 +65,7 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
         placeholder={t('steps.step2.placeholder')}
         disabled={step !== 2}
       />
-      {isLoading && step === 2 ? (
-        <div className="w-full">
-          <Progress
-            value={70}
-            className="w-full h-6 border-4 border-black rounded-none shadow-[2px_2px_0_0_#222] bg-yellow-200"
-          />
-          <div
-            className="text-center text-xs font-bold mt-1 text-black"
-            style={{ textShadow: '1px 1px 0 #fff' }}
-          >
-            {t('common.loading')}
-          </div>
-        </div>
-      ) : (
+      {!isLoading && step === 2 && (
         <Button
           variant="neutral"
           onClick={async () => {

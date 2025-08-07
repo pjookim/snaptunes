@@ -3,7 +3,16 @@ import createNextIntlPlugin from 'next-intl/plugin'
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['platform-lookaside.fbsbx.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'platform-lookaside.fbsbx.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.scdn.co',
+      }
+    ],
   },
 }
 

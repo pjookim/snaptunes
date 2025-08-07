@@ -24,7 +24,11 @@ export async function generateMetadata({
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
-  const locale = params.locale
+  const { locale } = await params
+
+  if (!hasLocale(routing.locales, locale)) {
+    notFound()
+  }
 
   const t = await getTranslations({ locale, namespace: 'app' })
 
