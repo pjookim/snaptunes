@@ -21,6 +21,24 @@ import { toast } from 'sonner'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 
+type SavedState = {
+  step: number
+  text: string
+  ocrResult: SongInfo[]
+  spotifyTracks: SpotifyTrack[]
+  selectedTrackIds: string[]
+  playlistName: string
+  isExtracted: boolean
+  isSearched: boolean
+  spotifyUser: {
+    id: string
+    displayName: string
+    email: string
+    imageUrl?: string
+  } | null
+  timestamp: number
+}
+
 function getAccessTokenFromUrl(): string | null {
   if (typeof window === 'undefined') return null
   const url = new URL(window.location.href)
@@ -44,7 +62,7 @@ function setStepInUrl(step: number) {
 }
 
 // localStorage에 상태 저장하기
-function saveStateToStorage(state: any) {
+function saveStateToStorage(state: SavedState) {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem('snaptunes_state', JSON.stringify(state))
@@ -629,7 +647,7 @@ export default function Home() {
 
   // 중요 상태 변경 시 localStorage에 저장
   useEffect(() => {
-    const stateToSave = {
+    const stateToSave: SavedState = {
       step,
       text,
       ocrResult,
