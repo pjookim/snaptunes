@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "SnapTunes",
+    "logo": "SnapTunes Logo"
+  },
+  "steps": {
+    "step1": {
+      "title": "1. Spotify Authentication",
+      "description": "You need to log in with your Spotify account to create a playlist.",
+      "button": "Authenticate with Spotify",
+      "buttonAuthenticated": "Spotify Authenticated",
+      "logout": "Logout from Spotify",
+      "connectedAs": "Connected as",
+      "readyToContinue": "✓ Ready to continue to next step",
+      "next": "Next",
+      "done": "Done"
+    },
+    "step2": {
+      "title": "2. Enter Song Titles / Artists",
+      "description": "Upload an image or enter song titles/artists directly.",
+      "placeholder": "Enter song titles and artists (one per line)",
+      "button": "Extract Song Titles",
+      "loading": "Extracting...",
+      "next": "Next",
+      "done": "Done"
+    },
+    "step3": {
+      "title": "3. Search Songs on Spotify",
+      "description": "Search for the extracted songs/artists on Spotify.",
+      "notFound": "(Not found)",
+      "next": "Next",
+      "done": "Done"
+    },
+    "step4": {
+      "title": "4. Create Playlist",
+      "description": "Create a Spotify playlist with the selected songs.",
+      "placeholder": "SnapTunes Playlist",
+      "button": "Create Spotify Playlist",
+      "creating": "Creating...",
+      "done": "Done",
+      "by": "by"
+    }
+  },
+  "navigation": {
+    "previous": "Previous step",
+    "next": "Next step"
+  },
+  "common": {
+    "loading": "Loading...",
+    "album": "album",
+    "playlistCover": "Playlist Cover",
+    "loggedOut": "Successfully logged out from Spotify",
+    "profile": "Profile"
+  },
+  "errors": {
+    "imageExtractionFailed": "Failed to extract text from image.",
+    "enterText": "Please enter text.",
+    "noSongsExtracted": "No songs could be extracted. Please try a different text or upload a clearer image.",
+    "extractionFailed": "Failed to extract song titles.",
+    "spotifyAuthRequired": "Spotify authentication is required.",
+    "noSongTitles": "No song titles extracted.",
+    "searchFailed": "Failed to search on Spotify.",
+    "noSongsToAdd": "No songs to add.",
+    "createPlaylistFailed": "Failed to create playlist.",
+    "authenticateFirst": "Please authenticate with Spotify first.",
+    "extractFirst": "Please extract song titles first.",
+    "searchFirst": "Please search songs on Spotify first."
+  },
+  "defaults": {
+    "playlistName": "SnapTunes Playlist"
+  }
+} 

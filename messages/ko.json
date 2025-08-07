@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "SnapTunes",
+    "logo": "SnapTunes 로고"
+  },
+  "steps": {
+    "step1": {
+      "title": "1. Spotify 인증",
+      "description": "플레이리스트를 생성하려면 Spotify 계정으로 로그인해야 합니다.",
+      "button": "Spotify로 인증하기",
+      "buttonAuthenticated": "Spotify 인증 완료",
+      "logout": "Spotify에서 로그아웃",
+      "connectedAs": "연결된 계정",
+      "readyToContinue": "✓ 다음 단계로 진행할 준비가 되었습니다",
+      "next": "다음",
+      "done": "완료"
+    },
+    "step2": {
+      "title": "2. 곡 제목 / 아티스트 입력",
+      "description": "이미지를 업로드하거나 곡 제목/아티스트를 직접 입력하세요.",
+      "placeholder": "곡 제목과 아티스트를 입력하세요 (한 줄에 하나씩)",
+      "button": "곡 제목 추출하기",
+      "loading": "추출 중...",
+      "next": "다음",
+      "done": "완료"
+    },
+    "step3": {
+      "title": "3. Spotify에서 곡 검색",
+      "description": "추출된 곡/아티스트를 Spotify에서 검색합니다.",
+      "notFound": "(찾을 수 없음)",
+      "next": "다음",
+      "done": "완료"
+    },
+    "step4": {
+      "title": "4. 플레이리스트 생성",
+      "description": "선택한 곡들로 Spotify 플레이리스트를 생성합니다.",
+      "placeholder": "SnapTunes 플레이리스트",
+      "button": "Spotify 플레이리스트 생성",
+      "creating": "생성 중...",
+      "done": "완료",
+      "by": "작성자"
+    }
+  },
+  "navigation": {
+    "previous": "이전 단계",
+    "next": "다음 단계"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "album": "앨범",
+    "playlistCover": "플레이리스트 커버",
+    "loggedOut": "Spotify에서 성공적으로 로그아웃되었습니다",
+    "profile": "프로필"
+  },
+  "errors": {
+    "imageExtractionFailed": "이미지에서 텍스트를 추출하는 데 실패했습니다.",
+    "enterText": "텍스트를 입력해주세요.",
+    "noSongsExtracted": "추출할 수 있는 곡이 없습니다. 다른 텍스트를 시도하거나 더 선명한 이미지를 업로드해보세요.",
+    "extractionFailed": "곡 제목 추출에 실패했습니다.",
+    "spotifyAuthRequired": "Spotify 인증이 필요합니다.",
+    "noSongTitles": "추출된 곡 제목이 없습니다.",
+    "searchFailed": "Spotify 검색에 실패했습니다.",
+    "noSongsToAdd": "추가할 곡이 없습니다.",
+    "createPlaylistFailed": "플레이리스트 생성에 실패했습니다.",
+    "authenticateFirst": "먼저 Spotify로 인증해주세요.",
+    "extractFirst": "먼저 곡 제목을 추출해주세요.",
+    "searchFirst": "먼저 Spotify에서 곡을 검색해주세요."
+  },
+  "defaults": {
+    "playlistName": "SnapTunes 플레이리스트"
+  }
+} 
