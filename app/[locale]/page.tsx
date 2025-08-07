@@ -510,7 +510,7 @@ export default function Home() {
               {stepCards[contentIdx].content}
               {/* Neo-brutalism Progress Bar (2,3단계 로딩 중) */}
               {isLoading && (step === 2 || step === 3) && (
-                <div className="w-full py-2 z-40">
+                <div className="w-full py-1 z-40">
                   <Progress
                     value={70}
                     className="w-full h-6 border-4 border-black rounded-none shadow-[2px_2px_0_0_#222] bg-yellow-200"

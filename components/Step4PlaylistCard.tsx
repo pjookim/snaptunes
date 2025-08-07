@@ -1,6 +1,7 @@
 import React from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 interface PlaylistMeta {
   cover?: string | null
@@ -89,10 +90,12 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
+              <Image
+                width={128}
+                height={128}
                 src={playlistMeta.cover}
                 alt={t('common.playlistCover')}
-                className="w-32 h-32 rounded shadow border-2 border-black mb-2"
+                className="w-32 h-32 rounded shadow border-2 border-black mb-2 p-1"
               />
             </a>
           )}
@@ -127,4 +130,4 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
   )
 }
 
-export default Step4PlaylistCard 
+export default Step4PlaylistCard
