@@ -1,32 +1,32 @@
-import { NextIntlClientProvider, hasLocale } from 'next-intl';
-import { notFound } from 'next/navigation';
-import { routing } from '@/i18n/routing';
-import { Toaster } from '@/components/ui/sonner';
-import { Geist, Geist_Mono } from 'next/font/google';
-import { GoogleAnalytics } from "@next/third-parties/google";
-import { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { NextIntlClientProvider, hasLocale } from 'next-intl'
+import { notFound } from 'next/navigation'
+import { routing } from '@/i18n/routing'
+import { Toaster } from '@/components/ui/sonner'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { GoogleAnalytics } from '@next/third-parties/google'
+import { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
   display: 'swap',
-});
+})
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
   display: 'swap',
-});
+})
 
 export async function generateMetadata({
-  params, }: {
-    params: { locale: string }
-  }
-): Promise<Metadata> {
+  params,
+}: {
+  params: { locale: string }
+}): Promise<Metadata> {
   const locale = params.locale
 
-  const t = await getTranslations({ locale, namespace: 'app' });
+  const t = await getTranslations({ locale, namespace: 'app' })
 
   return {
     title: t('title'),
@@ -36,27 +36,27 @@ export async function generateMetadata({
     alternates: {
       canonical: '/',
       languages: {
-        'en': '/en',
-        'ko': '/ko',
-      }
+        en: '/en',
+        ko: '/ko',
+      },
     },
     openGraph: {
-      images: '/opengraph-image.png'
-    }
+      images: '/opengraph-image.png',
+    },
   }
 }
 
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
   // Ensure that the incoming `locale` is valid
-  const { locale } = await params;
+  const { locale } = await params
   if (!hasLocale(routing.locales, locale)) {
-    notFound();
+    notFound()
   }
 
   return (
@@ -71,8 +71,10 @@ export default async function LocaleLayout({
       </body>
       {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID &&
         process.env.NODE_ENV === 'production' && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID!} />
+          <GoogleAnalytics
+            gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID!}
+          />
         )}
     </html>
-  );
+  )
 }

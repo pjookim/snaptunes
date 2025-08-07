@@ -1,60 +1,73 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { accessToken, tracks, playlistName } = await req.json();
+  const { accessToken, tracks, playlistName } = await req.json()
   if (!accessToken || !Array.isArray(tracks) || !playlistName) {
-    return NextResponse.json({ error: "잘못된 요청" }, { status: 400 });
+    return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
   }
 
   // 1. 사용자 정보 조회 (user id 필요)
-  const userRes = await fetch("https://api.spotify.com/v1/me", {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  const user = await userRes.json();
+  const userRes = await fetch('https://api.spotify.com/v1/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const user = await userRes.json()
   if (!user.id) {
-    return NextResponse.json({ error: "사용자 정보 조회 실패" }, { status: 400 });
+    return NextResponse.json(
+      { error: '사용자 정보 조회 실패' },
+      { status: 400 },
+    )
   }
 
   // 2. 플레이리스트 생성
-  const playlistRes = await fetch(`https://api.spotify.com/v1/users/${user.id}/playlists`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
+  const playlistRes = await fetch(
+    `https://api.spotify.com/v1/users/${user.id}/playlists`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: playlistName,
+        public: false,
+        description: 'SnapTunes로 생성된 플레이리스트',
+      }),
     },
-    body: JSON.stringify({
-      name: playlistName,
-      public: false,
-      description: "SnapTunes로 생성된 플레이리스트"
-    })
-  });
-  const playlist = await playlistRes.json();
+  )
+  const playlist = await playlistRes.json()
   if (!playlist.id) {
-    return NextResponse.json({ error: "플레이리스트 생성 실패" }, { status: 400 });
+    return NextResponse.json(
+      { error: '플레이리스트 생성 실패' },
+      { status: 400 },
+    )
   }
 
   // 3. 트랙 추가
-  const uris = tracks.map((id: string) => `spotify:track:${id}`);
+  const uris = tracks.map((id: string) => `spotify:track:${id}`)
   await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ uris })
-  });
+    body: JSON.stringify({ uris }),
+  })
 
   // 4. 플레이리스트 상세 정보 조회 (cover, name, owner 등)
-  const playlistDetailRes = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  const playlistDetail = await playlistDetailRes.json();
+  const playlistDetailRes = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlist.id}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
+  const playlistDetail = await playlistDetailRes.json()
 
   return NextResponse.json({
     playlistUrl: playlist.external_urls.spotify,
     cover: playlistDetail.images?.[0]?.url || null,
     name: playlistDetail.name,
-    ownerName: playlistDetail.owner?.display_name || playlistDetail.owner?.id || "",
-    ownerUrl: playlistDetail.owner?.external_urls?.spotify || null
-  });
-} 
+    ownerName:
+      playlistDetail.owner?.display_name || playlistDetail.owner?.id || '',
+    ownerUrl: playlistDetail.owner?.external_urls?.spotify || null,
+  })
+}
