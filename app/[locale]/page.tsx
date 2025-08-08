@@ -494,7 +494,7 @@ export default function Home() {
         </div>
         {/* 카드 애니메이션 */}
         <div
-          className="relative flex items-start justify-center w-full"
+          className="relative flex items-start justify-center w-full mb-16"
           style={{
             minHeight: 220,
             height: cardHeight,
@@ -524,7 +524,7 @@ export default function Home() {
                 pointerEvents: 'none',
               }}
             />
-            <div className="relative z-30 px-6 py-4 md:px-8" ref={contentRef}>
+            <div className="relative z-30 px-4 py-4 md:px-8" ref={contentRef}>
               {stepCards[contentIdx].content}
               {/* Neo-brutalism Progress Bar (2,3단계 로딩 중) */}
               {isLoading && (step === 2 || step === 3) && (

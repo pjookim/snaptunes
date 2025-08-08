@@ -11,7 +11,7 @@
       "description": "You need to log in with your Spotify account to create a playlist.",
       "button": "Authenticate with Spotify",
       "buttonAuthenticated": "Spotify Authenticated",
-      "logout": "Logout from Spotify",
+      "logout": "Logout",
       "connectedAs": "Connected as",
       "readyToContinue": "✓ Ready to continue to next step",
       "next": "Next",
@@ -31,8 +31,8 @@
       "loading": "Extracting...",
       "next": "Next",
       "done": "Done",
-      "tabV1": "V1 - OCR Method",
-      "tabV2": "V2 - AI Vision"
+      "tabV1": "Classic (V1)",
+      "tabV2": "IntelliSense (V2)"
     },
     "step3": {
       "title": "3. Search Songs on Spotify",

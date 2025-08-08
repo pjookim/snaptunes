@@ -11,7 +11,7 @@
       "description": "플레이리스트를 생성하려면 Spotify 계정으로 로그인해야 합니다.",
       "button": "Spotify로 인증하기",
       "buttonAuthenticated": "Spotify 인증 완료",
-      "logout": "Spotify에서 로그아웃",
+      "logout": "로그아웃",
       "connectedAs": "연결된 계정",
       "readyToContinue": "✓ 다음 단계로 진행할 준비가 되었습니다",
       "next": "다음",
@@ -31,8 +31,8 @@
       "loading": "추출 중...",
       "next": "다음",
       "done": "완료",
-      "tabV1": "V1 - OCR 방식",
-      "tabV2": "V2 - AI 비전"
+      "tabV1": "Classic (V1)",
+      "tabV2": "IntelliSense (V2)"
     },
     "step3": {
       "title": "3. Spotify에서 곡 검색",

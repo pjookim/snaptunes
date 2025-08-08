@@ -42,49 +42,54 @@ const Step1AuthCard: React.FC<Step1AuthCardProps> = ({
       </p>
       {spotifyToken && spotifyUser ? (
         <div className="relative">
-          <div className="flex flex-row items-stretch bg-white border-2 border-black rounded-base shadow-[2px_2px_0_0_#222]">
+          <div className="bg-white border-2 border-black rounded-base shadow-[2px_2px_0_0_#222] p-4">
             {/* 프로필 정보 */}
-            <div className="flex-1 p-4 flex flex-col justify-center">
-              <div className="flex items-center gap-3">
-                {spotifyUser.imageUrl && (
+            <div className="flex items-center gap-3">
+              {spotifyUser.imageUrl && (
+                <Image
+                  width={48}
+                  height={48}
+                  src={spotifyUser.imageUrl}
+                  alt={t('common.profile')}
+                  className="w-12 h-12 rounded-full border-2 p-0.5 border-black"
+                />
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-1">
                   <Image
-                    width={48}
-                    height={48}
-                    src={spotifyUser.imageUrl}
-                    alt={t('common.profile')}
-                    className="w-12 h-12 rounded-full border-2 p-0.5 border-black"
+                    src="/spotify-logo.svg"
+                    alt="Spotify"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
                   />
-                )}
-                <div className="flex-1">
                   <div className="font-bold text-lg text-black">
                     {spotifyUser.displayName}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {spotifyUser.email}
-                  </div>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {spotifyUser.email}
                 </div>
               </div>
             </div>
-            {/* 세로 로그아웃 버튼 */}
-            <div className="flex flex-col items-center justify-center px-4 border-l-2 border-black min-h-full">
-              <Button
-                variant="neutral"
-                size="icon"
-                aria-label={t('steps.step1.logout')}
-                onClick={handleSpotifyLogout}
-              >
-                <LogOut size={32} strokeWidth={3} />
-              </Button>
-            </div>
           </div>
-          <Button
-            variant="neutral"
-            className="mt-6 w-full"
-            onClick={() => goToStep(2)}
-            disabled={!spotifyToken}
-          >
-            {t('steps.step1.next')}
-          </Button>
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleSpotifyLogout}
+            >
+              {t('steps.step1.logout')}
+            </Button>
+            <Button
+              variant="neutral"
+              className="flex-1"
+              onClick={() => goToStep(2)}
+              disabled={!spotifyToken}
+            >
+              {t('steps.step1.next')}
+            </Button>
+          </div>
         </div>
       ) : spotifyToken ? (
         <div className="space-y-2">
