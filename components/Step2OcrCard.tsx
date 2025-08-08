@@ -46,12 +46,8 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
     <>
       <Tabs defaultValue="v2" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="v1">
-            {t('steps.step2.tabV1')}
-          </TabsTrigger>
-          <TabsTrigger value="v2">
-            {t('steps.step2.tabV2')}
-          </TabsTrigger>
+          <TabsTrigger value="v1">{t('steps.step2.tabV1')}</TabsTrigger>
+          <TabsTrigger value="v2">{t('steps.step2.tabV2')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="v1" className="mt-4">
@@ -140,7 +136,10 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
             <Button
               variant="neutral"
               onClick={() => {
-                console.log('[Step2OcrCard] V2 button clicked with locale:', locale)
+                console.log(
+                  '[Step2OcrCard] V2 button clicked with locale:',
+                  locale,
+                )
                 handleExtractSongsV2(locale)
               }}
               disabled={isLoading || (!imageData && !text.trim()) || step !== 2}
@@ -178,4 +177,4 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
   )
 }
 
-export default Step2OcrCard 
+export default Step2OcrCard

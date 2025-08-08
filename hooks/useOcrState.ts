@@ -84,7 +84,11 @@ export function useOcrState(t: (key: string) => string) {
     setIsExtracted(false)
 
     try {
-      console.log('[useOcrState] V2 extraction request:', { locale, hasImage: !!imageData, hasText: !!text.trim() })
+      console.log('[useOcrState] V2 extraction request:', {
+        locale,
+        hasImage: !!imageData,
+        hasText: !!text.trim(),
+      })
       const response = await fetch('/api/extract-songs-v2', {
         method: 'POST',
         headers: {
@@ -103,7 +107,7 @@ export function useOcrState(t: (key: string) => string) {
       }
 
       const data = await response.json()
-      
+
       if (data.songs && Array.isArray(data.songs)) {
         setOcrResult(data.songs)
         setIsExtracted(true)

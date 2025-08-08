@@ -2,7 +2,13 @@
 
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 
 export default function LanguageSwitcher() {
   const locale = useLocale()

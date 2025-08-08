@@ -67,9 +67,7 @@ const Step1AuthCard: React.FC<Step1AuthCardProps> = ({
                     {spotifyUser.displayName}
                   </div>
                 </div>
-                <div className="text-sm text-gray-600">
-                  {spotifyUser.email}
-                </div>
+                <div className="text-sm text-gray-600">{spotifyUser.email}</div>
               </div>
             </div>
           </div>
@@ -94,9 +92,7 @@ const Step1AuthCard: React.FC<Step1AuthCardProps> = ({
       ) : spotifyToken ? (
         <div className="space-y-2">
           <div className="bg-white border-2 border-black p-4 rounded-none shadow-[2px_2px_0_0_#222] text-center">
-            <div className="text-sm text-gray-600">
-              {t('common.loading')}
-            </div>
+            <div className="text-sm text-gray-600">{t('common.loading')}</div>
           </div>
           <Button variant="neutral" className="w-full" disabled>
             {t('steps.step1.buttonAuthenticated')}
@@ -115,4 +111,4 @@ const Step1AuthCard: React.FC<Step1AuthCardProps> = ({
   )
 }
 
-export default Step1AuthCard 
+export default Step1AuthCard

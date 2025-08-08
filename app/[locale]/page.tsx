@@ -166,24 +166,24 @@ export default function Home() {
     },
     {
       color: NEO_CARD_COLORS[1],
-              content: (
-          <Step2OcrCard
-            t={t}
-            step={step}
-            text={text}
-            setText={setText}
-            isLoading={isLoading}
-            ocrResult={ocrResult}
-            handleImageUpload={handleImageUpload}
-            handleImageUploadV2={handleImageUploadV2}
-            handleExtractSongs={handleExtractSongs}
-            handleExtractSongsV2={handleExtractSongsV2}
-            isExtracted={isExtracted}
-            goToStep={goToStep}
-                        imageData={imageData}
-            locale={(params.locale as string) || 'en'}
-          />
-        ),
+      content: (
+        <Step2OcrCard
+          t={t}
+          step={step}
+          text={text}
+          setText={setText}
+          isLoading={isLoading}
+          ocrResult={ocrResult}
+          handleImageUpload={handleImageUpload}
+          handleImageUploadV2={handleImageUploadV2}
+          handleExtractSongs={handleExtractSongs}
+          handleExtractSongsV2={handleExtractSongsV2}
+          isExtracted={isExtracted}
+          goToStep={goToStep}
+          imageData={imageData}
+          locale={(params.locale as string) || 'en'}
+        />
+      ),
       minHeight: 340,
     },
     {
@@ -435,19 +435,18 @@ export default function Home() {
           <ThemeToggle />
         </div>
       </div>
-      <div className="w-full max-w-2xl">
-        <div className="flex flex-col items-center my-8 max-w-32 mx-auto md:max-w-md">
+      <div className="w-full max-w-2xl flex flex-col items-center gap-6 md:gap-8 my-6">
+        <div className="flex flex-col items-center max-w-32 mx-auto md:max-w-md">
           <Image
             src={isDark ? '/snaptunes_logo_dark.svg' : '/snaptunes_logo.svg'}
             alt={t('app.logo')}
-            className="mb-2"
             width={200}
             height={200}
             priority
           />
         </div>
         {/* Step Indicator & Navigation (카드 위) */}
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <div className="flex items-center justify-center gap-4">
           <Button
             variant="default"
             size="icon"
@@ -494,7 +493,7 @@ export default function Home() {
         </div>
         {/* 카드 애니메이션 */}
         <div
-          className="relative flex items-start justify-center w-full mb-16"
+          className="relative flex items-start justify-center w-full mb-8"
           style={{
             minHeight: 220,
             height: cardHeight,

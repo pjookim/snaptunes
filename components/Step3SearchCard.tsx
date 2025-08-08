@@ -55,8 +55,8 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
                 {/* 앨범 커버 */}
                 {track.albumArt && (
                   <Image
-                  width={48}
-                  height={48}
+                    width={48}
+                    height={48}
                     src={track.albumArt}
                     alt={t('common.album')}
                     className="w-12 h-12 rounded border-2 border-black shrink-0 p-0.5"
@@ -120,4 +120,4 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
   )
 }
 
-export default Step3SearchCard 
+export default Step3SearchCard

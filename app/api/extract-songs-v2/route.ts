@@ -48,9 +48,13 @@ function isSongArray(arr: unknown): arr is Song[] {
 }
 
 // locale에 따른 프롬프트 생성
-function getPromptsByLocale(locale: string, inputType: 'image' | 'text' | 'both', t: any) {
+function getPromptsByLocale(
+  locale: string,
+  inputType: 'image' | 'text' | 'both',
+  t: any,
+) {
   const isKorean = locale === 'ko'
-  
+
   if (inputType === 'image') {
     if (isKorean) {
       return {
@@ -82,7 +86,7 @@ function getPromptsByLocale(locale: string, inputType: 'image' | 'text' | 'both'
 - 공부/사무실 이미지 → 차분하고 기악곡 추천
 - 자연/여행 이미지 → 평화롭고 앰비언트한 곡 추천
 
-사람들이 실제로 듣고 싶어할 만한 인기곡 10-15곡을 반환하세요. 한국어 곡과 영어 곡을 모두 포함하세요.`
+사람들이 실제로 듣고 싶어할 만한 인기곡 10-15곡을 반환하세요. 한국어 곡과 영어 곡을 모두 포함하세요.`,
       }
     } else {
       return {
@@ -113,7 +117,7 @@ Examples:
 - Study/office image → recommend calm, instrumental songs
 - Nature/travel image → recommend peaceful, ambient songs
 
-Make sure to return 10-15 popular, well-known songs that people would actually want to listen to.`
+Make sure to return 10-15 popular, well-known songs that people would actually want to listen to.`,
       }
     }
   } else {
@@ -138,7 +142,7 @@ Make sure to return 10-15 popular, well-known songs that people would actually w
 - 적절한 플레이리스트 제목을 추천하기 어려우면 "playlist_title"을 빈 문자열로 설정하세요
 - 사람들이 실제로 듣고 싶어할 만한 진짜 인기곡들을 반환하세요
 - 한국어 곡과 영어 곡을 모두 고려하세요`,
-                 userPrompt: `이 텍스트를 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천하세요.
+        userPrompt: `이 텍스트를 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천하세요.
 
 텍스트에 특정 곡이 언급되어 있다면 추출하세요. 분위기나 활동을 설명한다면 해당 테마에 맞는 인기곡을 추천하세요.
 
@@ -148,7 +152,7 @@ Make sure to return 10-15 popular, well-known songs that people would actually w
 - "공부할 때 듣는 곡" → 차분하고 기악곡 추천
 - "로드트립" → 클래식하고 따라 부르기 좋은 곡 추천
 
-텍스트: `
+텍스트: `,
       }
     } else if (inputType === 'both') {
       // 이미지와 텍스트 모두 있는 경우
@@ -181,7 +185,7 @@ Make sure to return 10-15 popular, well-known songs that people would actually w
 - 분위기나 테마가 있다면 해당 맥락에 맞는 곡 추천
 - 이미지와 텍스트의 정보를 결합하여 더 정확한 추천 제공
 
-텍스트: `
+텍스트: `,
         }
       } else {
         return {
@@ -210,7 +214,7 @@ Consider both image and text to:
 - Combine mood and themes for better recommendations
 - Use text as context for image when relevant
 
-Text: `
+Text: `,
         }
       }
     } else {
@@ -242,7 +246,7 @@ Examples:
 - "study music" → recommend calm, instrumental songs
 - "road trip" → recommend classic, sing-along songs
 
-Text:`
+Text:`,
       }
     }
   }
@@ -253,9 +257,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { text, image, locale = 'en' } = await req.json()
-    
+
     console.log('[API] Received locale from client:', locale)
-    
+
     // getTranslations를 사용하여 번역 가져오기
     const t = await getTranslations({ locale })
 
@@ -277,7 +281,12 @@ export async function POST(req: NextRequest) {
       inputType = 'text'
     } else {
       return NextResponse.json(
-        { error: locale === 'ko' ? '이미지나 텍스트를 입력해주세요.' : 'Please enter an image or text.' },
+        {
+          error:
+            locale === 'ko'
+              ? '이미지나 텍스트를 입력해주세요.'
+              : 'Please enter an image or text.',
+        },
         { status: 400 },
       )
     }
@@ -292,19 +301,25 @@ export async function POST(req: NextRequest) {
       userPrompt += text
     }
 
-    console.log('[API] OpenAI API 호출 시작', { 
-      inputType, 
-      textLength: text?.length, 
+    console.log('[API] OpenAI API 호출 시작', {
+      inputType,
+      textLength: text?.length,
       locale,
       systemPromptLength: systemPrompt.length,
-      userPromptLength: userPrompt.length
+      userPromptLength: userPrompt.length,
     })
-    console.log('[API] System Prompt (first 200 chars):', systemPrompt.substring(0, 200))
-    console.log('[API] User Prompt (first 200 chars):', userPrompt.substring(0, 200))
+    console.log(
+      '[API] System Prompt (first 200 chars):',
+      systemPrompt.substring(0, 200),
+    )
+    console.log(
+      '[API] User Prompt (first 200 chars):',
+      userPrompt.substring(0, 200),
+    )
 
     const messages: any[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'user', content: userPrompt },
     ]
 
     // 이미지가 있는 경우 vision 모델 사용
@@ -317,10 +332,10 @@ export async function POST(req: NextRequest) {
             type: 'image_url',
             image_url: {
               url: image,
-              detail: 'high'
-            }
-          }
-        ]
+              detail: 'high',
+            },
+          },
+        ],
       }
     }
 
@@ -331,7 +346,10 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: (inputType === 'image' || inputType === 'both') ? 'gpt-5-nano' : 'gpt-5-mini',
+        model:
+          inputType === 'image' || inputType === 'both'
+            ? 'gpt-5-nano'
+            : 'gpt-5-mini',
         messages,
         response_format: { type: 'json_object' },
         // max_completion_tokens: inputType === 'image' ? 2000 : 2000,
@@ -393,4 +411,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     )
   }
-} 
+}
