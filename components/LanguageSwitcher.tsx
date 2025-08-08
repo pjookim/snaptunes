@@ -2,7 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Button } from './ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
 export default function LanguageSwitcher() {
   const locale = useLocale()
@@ -24,21 +24,14 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex gap-2">
-      <Button
-        variant={locale === 'en' ? 'default' : 'neutral'}
-        size="sm"
-        onClick={() => switchLanguage('en')}
-      >
-        English
-      </Button>
-      <Button
-        variant={locale === 'ko' ? 'default' : 'neutral'}
-        size="sm"
-        onClick={() => switchLanguage('ko')}
-      >
-        한국어
-      </Button>
-    </div>
+    <Select value={locale} onValueChange={switchLanguage}>
+      <SelectTrigger className="w-28">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="en">English</SelectItem>
+        <SelectItem value="ko">한국어</SelectItem>
+      </SelectContent>
+    </Select>
   )
 }
