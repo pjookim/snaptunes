@@ -32,7 +32,10 @@
       "next": "Next",
       "done": "Done",
       "tabV1": "Classic (V1)",
-      "tabV2": "IntelliSense (V2)"
+      "tabV2": "IntelliSense (V2)",
+      "clickOrDrag": "Click or drag image here",
+      "dropHere": "Drop here!",
+      "imageFormats": "JPEG, PNG, GIF, BMP, WebP supported"
     },
     "step3": {
       "title": "3. Search Songs on Spotify",

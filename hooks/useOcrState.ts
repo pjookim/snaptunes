@@ -12,37 +12,32 @@ export function useOcrState(t: (key: string) => string) {
   const [playlistTitle, setPlaylistTitle] = useState<string>('')
 
   // 이미지 업로드 핸들러 (OCR 적용, tesseract.js를 동적 import)
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0])
-      setIsLoading(true)
-      try {
-        const Tesseract = (await import('tesseract.js')).default
-        const result = await Tesseract.recognize(e.target.files[0], 'eng+kor')
-        const text: string =
-          (result as { data: { text: string } }).data?.text ?? ''
-        setText(text)
-        await handleExtractSongs(text)
-      } catch (err) {
-        toast.error(t('errors.imageExtractionFailed'))
-      } finally {
-        setIsLoading(false)
-      }
+  async function handleImageUpload(file: File) {
+    setImage(file)
+    setIsLoading(true)
+    try {
+      const Tesseract = (await import('tesseract.js')).default
+      const result = await Tesseract.recognize(file, 'eng+kor')
+      const text: string =
+        (result as { data: { text: string } }).data?.text ?? ''
+      setText(text)
+      await handleExtractSongs(text)
+    } catch (err) {
+      toast.error(t('errors.imageExtractionFailed'))
+    } finally {
+      setIsLoading(false)
     }
   }
 
   // V2 이미지 업로드 핸들러 (GPT Vision용)
-  async function handleImageUploadV2(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0])
-      const file = e.target.files[0]
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const result = event.target?.result as string
-        setImageData(result)
-      }
-      reader.readAsDataURL(file)
+  async function handleImageUploadV2(file: File) {
+    setImage(file)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const result = event.target?.result as string
+      setImageData(result)
     }
+    reader.readAsDataURL(file)
   }
 
   // 곡명 추출 (ocrText 인자 허용)

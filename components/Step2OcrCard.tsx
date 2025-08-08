@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ImageDropzone from './ImageDropzone'
 
 interface SongInfo {
   title: string
@@ -16,13 +17,16 @@ interface Step2OcrCardProps {
   setText: (text: string) => void
   isLoading: boolean
   ocrResult: SongInfo[]
-  handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleImageUploadV2: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleImageUpload: (file: File) => void
+  handleImageUploadV2: (file: File) => void
   handleExtractSongs: (overrideText?: string) => Promise<void>
   handleExtractSongsV2: (locale: string) => Promise<void>
   isExtracted: boolean
   goToStep: (step: number) => void
   imageData: string | null
+  image: File | null
+  setImage: (image: File | null) => void
+  setImageData: (imageData: string | null) => void
   locale: string
 }
 
@@ -40,6 +44,9 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
   isExtracted,
   goToStep,
   imageData,
+  image,
+  setImage,
+  setImageData,
   locale,
 }) => {
   return (
@@ -68,12 +75,17 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
 
           {/* V1 기존 방식 */}
           <div className="mb-4">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
+            <ImageDropzone
+              onImageSelect={handleImageUpload}
+              onImageRemove={() => {
+                // V1에서는 이미지 제거 시 이미지와 텍스트 모두 초기화
+                setImage(null)
+                setImageData(null)
+                setText('')
+              }}
+              selectedImage={image ? URL.createObjectURL(image) : null}
               disabled={step !== 2}
-              className="border-2 border-black rounded bg-white"
+              t={t}
             />
           </div>
           <Textarea
@@ -116,12 +128,17 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
 
           {/* V2 GPT Vision 방식 */}
           <div className="mb-4">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUploadV2}
+            <ImageDropzone
+              onImageSelect={handleImageUploadV2}
+              onImageRemove={() => {
+                // V2에서는 이미지 제거 시 imageData만 초기화
+                // 텍스트는 유지
+                setImage(null)
+                setImageData(null)
+              }}
+              selectedImage={imageData}
               disabled={step !== 2}
-              className="border-2 border-black rounded bg-white"
+              t={t}
             />
           </div>
           <Textarea

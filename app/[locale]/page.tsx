@@ -181,6 +181,9 @@ export default function Home() {
           isExtracted={isExtracted}
           goToStep={goToStep}
           imageData={imageData}
+          image={image}
+          setImage={setImage}
+          setImageData={setImageData}
           locale={(params.locale as string) || 'en'}
         />
       ),
