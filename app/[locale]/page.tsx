@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import {
   searchSongsInSpotify,
   createSpotifyPlaylist,
@@ -94,6 +94,7 @@ function clearSpotifyTokens() {
 export default function Home() {
   const t = useTranslations()
   const searchParams = useSearchParams()
+  const params = useParams()
   const {
     image,
     setImage,
@@ -105,8 +106,14 @@ export default function Home() {
     setIsExtracted,
     isLoading,
     setIsLoading,
+    imageData,
+    setImageData,
+    playlistTitle,
+    setPlaylistTitle,
     handleImageUpload,
+    handleImageUploadV2,
     handleExtractSongs,
+    handleExtractSongsV2,
   } = useOcrState(t)
   const {
     spotifyToken,
@@ -122,6 +129,13 @@ export default function Home() {
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null)
   const [playlistName, setPlaylistName] = useState(t('defaults.playlistName'))
   const [isSearched, setIsSearched] = useState(false)
+
+  // playlistTitle이 있을 때 playlistName 업데이트
+  useEffect(() => {
+    if (playlistTitle) {
+      setPlaylistName(playlistTitle)
+    }
+  }, [playlistTitle])
   const { step, setStep, goToStep } = useStepState({
     spotifyToken,
     isExtracted,
@@ -152,20 +166,24 @@ export default function Home() {
     },
     {
       color: NEO_CARD_COLORS[1],
-      content: (
-        <Step2OcrCard
-          t={t}
-          step={step}
-          text={text}
-          setText={setText}
-          isLoading={isLoading}
-          ocrResult={ocrResult}
-          handleImageUpload={handleImageUpload}
-          handleExtractSongs={handleExtractSongs}
-          isExtracted={isExtracted}
-          goToStep={goToStep}
-        />
-      ),
+              content: (
+          <Step2OcrCard
+            t={t}
+            step={step}
+            text={text}
+            setText={setText}
+            isLoading={isLoading}
+            ocrResult={ocrResult}
+            handleImageUpload={handleImageUpload}
+            handleImageUploadV2={handleImageUploadV2}
+            handleExtractSongs={handleExtractSongs}
+            handleExtractSongsV2={handleExtractSongsV2}
+            isExtracted={isExtracted}
+            goToStep={goToStep}
+                        imageData={imageData}
+            locale={(params.locale as string) || 'en'}
+          />
+        ),
       minHeight: 340,
     },
     {
@@ -506,7 +524,7 @@ export default function Home() {
                 pointerEvents: 'none',
               }}
             />
-            <div className="relative z-30 p-8" ref={contentRef}>
+            <div className="relative z-30 px-6 py-4 md:px-8" ref={contentRef}>
               {stepCards[contentIdx].content}
               {/* Neo-brutalism Progress Bar (2,3단계 로딩 중) */}
               {isLoading && (step === 2 || step === 3) && (

@@ -46,7 +46,7 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
   return (
     <>
       <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-xl tracking-wider">
+        <span className="font-bold text-xl tracking-wider text-black">
           {t('steps.step4.title')}
         </span>
         {playlistUrl && (
@@ -58,13 +58,20 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
       <p className="text-base text-neutral-700 mb-4 font-mono">
         {t('steps.step4.description')}
       </p>
-      <Input
-        className="mb-2 border-2 border-black rounded bg-white"
-        value={playlistName}
-        onChange={(e) => setPlaylistName(e.target.value)}
-        placeholder={t('steps.step4.placeholder')}
-        disabled={step !== 4}
-      />
+      <div className="mb-4">
+        <Input
+          className="mb-2 border-2 border-black rounded bg-white"
+          value={playlistName}
+          onChange={(e) => setPlaylistName(e.target.value)}
+          placeholder={t('steps.step4.placeholder')}
+          disabled={step !== 4}
+        />
+        {playlistName && playlistName !== t('defaults.playlistName') && (
+          <div className="text-xs text-green-600 font-mono">
+            {t('steps.step4.aiRecommended')}
+          </div>
+        )}
+      </div>
       <Button
         variant="neutral"
         onClick={handleCreatePlaylist}

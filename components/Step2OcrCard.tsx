@@ -2,6 +2,7 @@ import React from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface SongInfo {
   title: string
@@ -16,9 +17,13 @@ interface Step2OcrCardProps {
   isLoading: boolean
   ocrResult: SongInfo[]
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleImageUploadV2: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleExtractSongs: (overrideText?: string) => Promise<void>
+  handleExtractSongsV2: (locale: string) => Promise<void>
   isExtracted: boolean
   goToStep: (step: number) => void
+  imageData: string | null
+  locale: string
 }
 
 const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
@@ -29,54 +34,124 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
   isLoading,
   ocrResult,
   handleImageUpload,
+  handleImageUploadV2,
   handleExtractSongs,
+  handleExtractSongsV2,
   isExtracted,
   goToStep,
+  imageData,
+  locale,
 }) => {
   return (
     <>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-xl tracking-wider text-black">
-          {t('steps.step2.title')}
-        </span>
-        {ocrResult.length > 0 && (
-          <span className="text-green-700 font-bold">
-            {t('steps.step2.done')}
-          </span>
-        )}
-      </div>
-      <p className="text-base text-neutral-700 mb-4 font-mono">
-        {t('steps.step2.description')}
-      </p>
-      <div className="mb-4">
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={step !== 2}
-          className="border-2 border-black rounded bg-white"
-        />
-      </div>
-      <Textarea
-        className="mb-4 bg-white"
-        rows={4}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={t('steps.step2.placeholder')}
-        disabled={step !== 2}
-      />
-      {!isLoading && step === 2 && (
-        <Button
-          variant="neutral"
-          onClick={async () => {
-            await handleExtractSongs()
-          }}
-          disabled={isLoading || !text.trim() || step !== 2}
-          className="w-full"
-        >
-          {t('steps.step2.button')}
-        </Button>
-      )}
+      <Tabs defaultValue="v2" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="v1">
+            {t('steps.step2.tabV1')}
+          </TabsTrigger>
+          <TabsTrigger value="v2">
+            {t('steps.step2.tabV2')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="v1" className="mt-4">
+          {/* V1 제목과 설명 */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-xl tracking-wider text-black">
+              {t('steps.step2.titleV1')}
+            </span>
+            {ocrResult.length > 0 && (
+              <span className="text-green-700 font-bold">
+                {t('steps.step2.done')}
+              </span>
+            )}
+          </div>
+          <p className="text-base text-neutral-700 mb-4 font-mono">
+            {t('steps.step2.descriptionV1')}
+          </p>
+
+          {/* V1 기존 방식 */}
+          <div className="mb-4">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={step !== 2}
+              className="border-2 border-black rounded bg-white"
+            />
+          </div>
+          <Textarea
+            className="mb-4 bg-white"
+            rows={4}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t('steps.step2.placeholder')}
+            disabled={step !== 2}
+          />
+          {!isLoading && step === 2 && (
+            <Button
+              variant="neutral"
+              onClick={async () => {
+                await handleExtractSongs()
+              }}
+              disabled={isLoading || !text.trim() || step !== 2}
+              className="w-full"
+            >
+              {t('steps.step2.button')}
+            </Button>
+          )}
+        </TabsContent>
+
+        <TabsContent value="v2" className="mt-4">
+          {/* V2 제목과 설명 */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-xl tracking-wider text-black">
+              {t('steps.step2.titleV2')}
+            </span>
+            {ocrResult.length > 0 && (
+              <span className="text-green-700 font-bold">
+                {t('steps.step2.done')}
+              </span>
+            )}
+          </div>
+          <p className="text-base text-neutral-700 mb-4 font-mono">
+            {t('steps.step2.descriptionV2')}
+          </p>
+
+          {/* V2 GPT Vision 방식 */}
+          <div className="mb-4">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUploadV2}
+              disabled={step !== 2}
+              className="border-2 border-black rounded bg-white"
+            />
+          </div>
+          <Textarea
+            className="mb-4 bg-white"
+            rows={4}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t('steps.step2.placeholderV2')}
+            disabled={step !== 2}
+          />
+          {!isLoading && step === 2 && (
+            <Button
+              variant="neutral"
+              onClick={() => {
+                console.log('[Step2OcrCard] V2 button clicked with locale:', locale)
+                handleExtractSongsV2(locale)
+              }}
+              disabled={isLoading || (!imageData && !text.trim()) || step !== 2}
+              className="w-full"
+            >
+              {t('steps.step2.buttonV2')}
+            </Button>
+          )}
+        </TabsContent>
+      </Tabs>
+
       {ocrResult.length > 0 && (
         <>
           <ul className="mt-4 space-y-1 text-black">

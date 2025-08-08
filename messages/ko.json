@@ -19,12 +19,20 @@
     },
     "step2": {
       "title": "2. 곡 제목 / 아티스트 입력",
+      "titleV1": "2. OCR 기반 곡 추출",
+      "titleV2": "2. AI 비전 기반 곡 추출",
       "description": "이미지를 업로드하거나 곡 제목/아티스트를 직접 입력하세요.",
+      "descriptionV1": "이미지에서 OCR로 텍스트를 추출하고, 곡 제목과 아티스트를 직접 입력할 수 있습니다. 정확한 곡 목록이 있는 경우에 적합합니다.",
+      "descriptionV2": "이미지나 텍스트를 입력하면 GPT Vision AI가 자동으로 분석합니다. 이미지의 분위기, 텍스트의 테마, 또는 정확한 곡 목록까지 모든 것을 인식하여 적절한 곡을 추천합니다.",
       "placeholder": "곡 제목과 아티스트를 입력하세요 (한 줄에 하나씩)",
+      "placeholderV2": "이미지를 업로드하거나 텍스트를 입력하세요. GPT가 자동으로 분석합니다.",
       "button": "곡 제목 추출하기",
+      "buttonV2": "GPT로 곡 추출/추천",
       "loading": "추출 중...",
       "next": "다음",
-      "done": "완료"
+      "done": "완료",
+      "tabV1": "V1 - OCR 방식",
+      "tabV2": "V2 - AI 비전"
     },
     "step3": {
       "title": "3. Spotify에서 곡 검색",
@@ -40,7 +48,8 @@
       "button": "Spotify 플레이리스트 생성",
       "creating": "생성 중...",
       "done": "완료",
-      "by": "작성자"
+      "by": "작성자",
+      "aiRecommended": "✨ AI가 추천한 플레이리스트 제목입니다"
     }
   },
   "navigation": {

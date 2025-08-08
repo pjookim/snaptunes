@@ -8,6 +8,8 @@ export function useOcrState(t: (key: string) => string) {
   const [ocrResult, setOcrResult] = useState<SongInfo[]>([])
   const [isExtracted, setIsExtracted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [imageData, setImageData] = useState<string | null>(null)
+  const [playlistTitle, setPlaylistTitle] = useState<string>('')
 
   // 이미지 업로드 핸들러 (OCR 적용, tesseract.js를 동적 import)
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -26,6 +28,20 @@ export function useOcrState(t: (key: string) => string) {
       } finally {
         setIsLoading(false)
       }
+    }
+  }
+
+  // V2 이미지 업로드 핸들러 (GPT Vision용)
+  async function handleImageUploadV2(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0])
+      const file = e.target.files[0]
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const result = event.target?.result as string
+        setImageData(result)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -56,6 +72,63 @@ export function useOcrState(t: (key: string) => string) {
     }
   }
 
+  // V2 곡명 추출 (GPT Vision)
+  async function handleExtractSongsV2(locale: string = 'en') {
+    if (!imageData && !text.trim()) {
+      toast.error('이미지나 텍스트를 입력해주세요.')
+      return
+    }
+
+    setIsLoading(true)
+    setOcrResult([])
+    setIsExtracted(false)
+
+    try {
+      console.log('[useOcrState] V2 extraction request:', { locale, hasImage: !!imageData, hasText: !!text.trim() })
+      const response = await fetch('/api/extract-songs-v2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text.trim() || '',
+          image: imageData,
+          inputType: imageData ? 'image' : 'text',
+          locale: locale,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to extract songs')
+      }
+
+      const data = await response.json()
+      
+      if (data.songs && Array.isArray(data.songs)) {
+        setOcrResult(data.songs)
+        setIsExtracted(true)
+        // API에서 반환된 playlist_title 저장
+        if (data.playlist_title) {
+          setPlaylistTitle(data.playlist_title)
+        }
+        if (data.songs.length === 0) {
+          toast.warning('추출된 곡이 없습니다.')
+        } else {
+          toast.success(`${data.songs.length}개의 곡을 찾았습니다.`)
+        }
+      } else {
+        setOcrResult([])
+        setIsExtracted(false)
+        toast.warning('추출된 곡이 없습니다.')
+      }
+    } catch (error) {
+      console.error('V2 extraction error:', error)
+      toast.error('곡 추출에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return {
     image,
     setImage,
@@ -67,7 +140,13 @@ export function useOcrState(t: (key: string) => string) {
     setIsExtracted,
     isLoading,
     setIsLoading,
+    imageData,
+    setImageData,
+    playlistTitle,
+    setPlaylistTitle,
     handleImageUpload,
+    handleImageUploadV2,
     handleExtractSongs,
+    handleExtractSongsV2,
   }
 }

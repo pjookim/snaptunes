@@ -32,7 +32,7 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
   return (
     <>
       <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-xl tracking-wider">
+        <span className="font-bold text-xl tracking-wider text-black">
           {t('steps.step3.title')}
         </span>
         {spotifyTracks.length > 0 && (

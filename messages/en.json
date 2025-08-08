@@ -19,12 +19,20 @@
     },
     "step2": {
       "title": "2. Enter Song Titles / Artists",
+      "titleV1": "2. OCR-based Song Extraction",
+      "titleV2": "2. AI Vision-based Song Extraction",
       "description": "Upload an image or enter song titles/artists directly.",
+      "descriptionV1": "Extract text from images using OCR and enter song titles and artists directly. Suitable when you have an accurate list of songs.",
+      "descriptionV2": "Enter an image or text and GPT Vision AI will analyze automatically. Recognizes everything from image mood, text themes, to exact song lists and recommends appropriate songs.",
       "placeholder": "Enter song titles and artists (one per line)",
+      "placeholderV2": "Upload an image or enter text. GPT will analyze automatically.",
       "button": "Extract Song Titles",
+      "buttonV2": "Extract/Recommend with GPT",
       "loading": "Extracting...",
       "next": "Next",
-      "done": "Done"
+      "done": "Done",
+      "tabV1": "V1 - OCR Method",
+      "tabV2": "V2 - AI Vision"
     },
     "step3": {
       "title": "3. Search Songs on Spotify",
@@ -40,7 +48,8 @@
       "button": "Create Spotify Playlist",
       "creating": "Creating...",
       "done": "Done",
-      "by": "by"
+      "by": "by",
+      "aiRecommended": "✨ AI recommended playlist title"
     }
   },
   "navigation": {
