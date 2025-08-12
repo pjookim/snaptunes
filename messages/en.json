@@ -2,15 +2,15 @@
   "app": {
     "title": "SnapTunes - From Snap to Sound",
     "logo": "SnapTunes Logo",
-    "description": "Create Spotify playlists instantly from images or text with SnapTunes. Powered by AI and OCR, we turn your moments into music.",
-    "keywords": "SnapTunes, AI playlist generator, OCR music app, image to music, text to playlist"
+    "description": "Create music playlists instantly from images or text with SnapTunes. Powered by AI and OCR, we turn your moments into music.",
+    "keywords": "SnapTunes, AI playlist generator, OCR music app, image to music, text to playlist, Spotify, Apple Music"
   },
   "steps": {
     "step1": {
-      "title": "1. Spotify Authentication",
-      "description": "You need to log in with your Spotify account to create a playlist.",
-      "button": "Authenticate with Spotify",
-      "buttonAuthenticated": "Spotify Authenticated",
+      "title": "1. Music Service Authentication",
+      "description": "You need to log in with your music service account to create a playlist.",
+      "button": "Authenticate with Music Service",
+      "buttonAuthenticated": "Music Service Authenticated",
       "logout": "Logout",
       "connectedAs": "Connected as",
       "readyToContinue": "✓ Ready to continue to next step",
@@ -38,17 +38,17 @@
       "imageFormats": "JPEG, PNG, GIF, BMP, WebP supported"
     },
     "step3": {
-      "title": "3. Search Songs on Spotify",
-      "description": "Search for the extracted songs/artists on Spotify.",
+      "title": "3. Search Songs on Music Service",
+      "description": "Search for the extracted songs/artists on music service.",
       "notFound": "(Not found)",
       "next": "Next",
       "done": "Done"
     },
     "step4": {
       "title": "4. Create Playlist",
-      "description": "Create a Spotify playlist with the selected songs.",
+      "description": "Create a music service playlist with the selected songs.",
       "placeholder": "SnapTunes Playlist",
-      "button": "Create Spotify Playlist",
+      "button": "Create Playlist",
       "creating": "Creating...",
       "done": "Done",
       "by": "by",
@@ -72,15 +72,55 @@
     "noSongsExtracted": "No songs could be extracted. Please try a different text or upload a clearer image.",
     "extractionFailed": "Failed to extract song titles.",
     "spotifyAuthRequired": "Spotify authentication is required.",
+    "appleMusicAuthRequired": "Apple Music authentication is required.",
+    "youtubeMusicAuthRequired": "YouTube Music authentication is required.",
     "noSongTitles": "No song titles extracted.",
-    "searchFailed": "Failed to search on Spotify.",
+    "searchFailed": "Failed to search on music service.",
     "noSongsToAdd": "No songs to add.",
     "createPlaylistFailed": "Failed to create playlist.",
-    "authenticateFirst": "Please authenticate with Spotify first.",
+    "authenticateFirst": "Please authenticate with music service first.",
     "extractFirst": "Please extract song titles first.",
-    "searchFirst": "Please search songs on Spotify first."
+    "searchFirst": "Please search songs on music service first."
   },
   "defaults": {
     "playlistName": "SnapTunes Playlist"
+  },
+  "Step1AppleMusicAuthCard": {
+    "title": "Apple Music Authentication",
+    "description": "Log in with your Apple Music account to create playlists.",
+    "connect": "Connect with Apple Music",
+    "disconnect": "Disconnect",
+    "authorized": "Apple Music authenticated",
+    "loading": "Authenticating...",
+    "privacy": "Your privacy is safely protected"
+  },
+  "Step3AppleMusicSearchCard": {
+    "title": "Apple Music Search",
+    "description": "Search for extracted songs on Apple Music.",
+    "search": "Search on Apple Music",
+    "searching": "Searching...",
+    "results": "Search Results",
+    "found": "found",
+    "noSongs": "No songs to search"
+  },
+  "Step4AppleMusicPlaylistCard": {
+    "title": "Create Apple Music Playlist",
+    "description": "Create an Apple Music playlist with selected songs.",
+    "playlistName": "Playlist Name",
+    "playlistNamePlaceholder": "Enter playlist name",
+    "tracksToAdd": "Tracks to Add",
+    "createPlaylist": "Create Apple Music Playlist",
+    "creating": "Creating...",
+    "success": "Playlist created successfully!",
+    "openPlaylist": "Open Playlist",
+    "noTracks": "No tracks to add"
+  },
+  "Step1PlatformSelectionCard": {
+    "title": "Select Music Service",
+    "description": "Choose a music service to create your playlist.",
+    "spotifyDescription": "World's largest music streaming service",
+    "appleMusicDescription": "Apple's premium music service",
+    "youtubeDescription": "Google's music streaming service",
+    "privacy": "Your privacy is safely protected"
   }
 }

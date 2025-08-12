@@ -11,7 +11,7 @@ interface PlaylistMeta {
   ownerUrl?: string | null
 }
 
-interface SpotifyTrack {
+interface Track {
   id: string
   found?: boolean
 }
@@ -19,11 +19,12 @@ interface SpotifyTrack {
 interface Step4PlaylistCardProps {
   t: (key: string) => string
   step: number
+  selectedPlatform: 'spotify' | 'apple-music' | 'youtube-music' | null
   playlistName: string
   setPlaylistName: (name: string) => void
   isLoading: boolean
-  spotifyToken: string | null
-  spotifyTracks: SpotifyTrack[]
+  isAuthorized: boolean
+  tracks: Track[]
   selectedTrackIds: string[]
   handleCreatePlaylist: () => Promise<void>
   playlistUrl: string | null
@@ -33,21 +34,37 @@ interface Step4PlaylistCardProps {
 const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
   t,
   step,
+  selectedPlatform,
   playlistName,
   setPlaylistName,
   isLoading,
-  spotifyToken,
-  spotifyTracks,
+  isAuthorized,
+  tracks,
   selectedTrackIds,
   handleCreatePlaylist,
   playlistUrl,
   playlistMeta,
 }) => {
+  const getPlatformName = () => {
+    if (selectedPlatform === 'spotify') {
+      return 'Spotify'
+    } else if (selectedPlatform === 'apple-music') {
+      return 'Apple Music'
+    } else if (selectedPlatform === 'youtube-music') {
+      return 'YouTube Music'
+    }
+    return ''
+  }
+
+  const foundTracks = tracks.filter(
+    (t) => t.found && t.id && selectedTrackIds.includes(t.id),
+  )
+
   return (
     <>
       <div className="flex items-center justify-between mb-2">
         <span className="font-bold text-xl tracking-wider text-black">
-          {t('steps.step4.title')}
+          {t('steps.step4.title')} - {getPlatformName()}
         </span>
         {playlistUrl && (
           <span className="text-green-700 font-bold">
@@ -77,10 +94,8 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
         onClick={handleCreatePlaylist}
         disabled={
           isLoading ||
-          !spotifyToken ||
-          spotifyTracks.filter(
-            (t) => t.found && t.id && selectedTrackIds.includes(t.id),
-          ).length === 0 ||
+          !isAuthorized ||
+          foundTracks.length === 0 ||
           step !== 4
         }
         className="w-full"

@@ -2,14 +2,14 @@ import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
 export function useStepState({
-  spotifyToken,
+  isAuthorized,
   isExtracted,
   isSearched,
   t,
   setIsExtracted,
   setIsSearched,
 }: {
-  spotifyToken: string | null
+  isAuthorized: boolean
   isExtracted: boolean
   isSearched: boolean
   t: (key: string) => string
@@ -26,7 +26,7 @@ export function useStepState({
         setStep(next)
         return
       }
-      if (next > 1 && !spotifyToken) {
+      if (next > 1 && !isAuthorized) {
         toast.error(t('errors.authenticateFirst'))
         return
       }
@@ -42,7 +42,7 @@ export function useStepState({
       if (next < 2) setIsExtracted(false)
       if (next < 3) setIsSearched(false)
     },
-    [spotifyToken, isExtracted, isSearched, t, setIsExtracted, setIsSearched],
+    [isAuthorized, isExtracted, isSearched, t, setIsExtracted, setIsSearched],
   )
 
   return {

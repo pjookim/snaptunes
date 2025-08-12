@@ -1,41 +1,91 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
+import { Progress } from '@/components/ui/progress'
 
-interface SpotifyTrack {
+interface Track {
   id: string
   title: string
   artist: string
   albumArt?: string
-  found?: boolean // boolean | undefined 허용
+  found?: boolean
 }
 
 interface Step3SearchCardProps {
   t: (key: string) => string
   step: number
-  spotifyTracks: SpotifyTrack[]
+  selectedPlatform: 'spotify' | 'apple-music' | 'youtube-music' | null
+  tracks: Track[]
   selectedTrackIds: string[]
   handleTrackCheckbox: (trackId: string) => void
   isSearched: boolean
   goToStep: (step: number) => void
+  isLoading?: boolean // 로딩 상태 추가
 }
 
 const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
   t,
   step,
-  spotifyTracks,
+  selectedPlatform,
+  tracks,
   selectedTrackIds,
   handleTrackCheckbox,
   isSearched,
   goToStep,
+  isLoading = false,
 }) => {
+  const [searchProgress, setSearchProgress] = useState(0)
+  const [searchStatus, setSearchStatus] = useState('')
+
+  // Apple Music 검색 진행률 시뮬레이션 (실제로는 API에서 진행률을 받아와야 함)
+  useEffect(() => {
+    if (isLoading && selectedPlatform === 'apple-music' && tracks.length === 0) {
+      setSearchProgress(0)
+      setSearchStatus('Apple Music 검색 준비 중...')
+      
+      // 진행률 시뮬레이션 (실제로는 API 응답에서 진행률을 받아와야 함)
+      const interval = setInterval(() => {
+        setSearchProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval)
+            return 90
+          }
+          return prev + Math.random() * 15
+        })
+      }, 1000)
+
+      return () => clearInterval(interval)
+    } else if (!isLoading && tracks.length > 0) {
+      setSearchProgress(100)
+      setSearchStatus('검색 완료!')
+    }
+  }, [isLoading, selectedPlatform, tracks.length])
+
+  const getPlatformName = () => {
+    if (selectedPlatform === 'spotify') {
+      return 'Spotify'
+    } else if (selectedPlatform === 'apple-music') {
+      return 'Apple Music'
+    } else if (selectedPlatform === 'youtube-music') {
+      return 'YouTube Music'
+    }
+    return ''
+  }
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${Math.round(seconds)}초`
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}분 ${remainingSeconds}초`
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mb-2">
         <span className="font-bold text-xl tracking-wider text-black">
-          {t('steps.step3.title')}
+          {t('steps.step3.title')} - {getPlatformName()}
         </span>
-        {spotifyTracks.length > 0 && (
+        {tracks.length > 0 && (
           <span className="text-green-700 font-bold">
             {t('steps.step3.done')}
           </span>
@@ -44,10 +94,35 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
       <p className="text-base text-neutral-700 mb-4 font-mono">
         {t('steps.step3.description')}
       </p>
-      {spotifyTracks.length > 0 && (
+
+      {/* Apple Music 검색 진행률 표시 */}
+      {isLoading && selectedPlatform === 'apple-music' && (
+        <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold text-blue-800">Apple Music 검색 진행률</span>
+            <span className="text-sm text-blue-600">{Math.round(searchProgress)}%</span>
+          </div>
+          <Progress 
+            value={searchProgress} 
+            className="w-full h-3 bg-blue-100"
+          />
+          <div className="mt-2 text-sm text-blue-700">
+            {searchStatus}
+            {searchProgress > 0 && searchProgress < 100 && (
+              <div className="mt-1">
+                <span className="text-xs text-blue-500">
+                  Apple Music API 응답 속도가 느려서 시간이 걸릴 수 있습니다...
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tracks.length > 0 && (
         <>
           <ul className="mt-4 space-y-2">
-            {spotifyTracks.map((track, idx) => (
+            {tracks.map((track, idx) => (
               <li
                 key={idx}
                 className="flex items-center gap-2 text-base w-full"

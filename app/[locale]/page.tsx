@@ -10,6 +10,16 @@ import {
   SpotifyTrack,
   CreatedPlaylistInfo,
 } from '../spotify-api'
+import {
+  searchSongsInAppleMusic,
+  createAppleMusicPlaylist,
+  AppleMusicTrack,
+} from '../apple-music-api'
+import {
+  searchSongsInYouTubeMusic,
+  createYouTubeMusicPlaylist,
+  YouTubeMusicTrack,
+} from '../youtube-music-api'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -17,22 +27,38 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
-import Step1AuthCard from '@/components/Step1AuthCard'
+import Step1UnifiedCard from '@/components/Step1UnifiedCard'
 import Step2OcrCard from '@/components/Step2OcrCard'
 import Step3SearchCard from '@/components/Step3SearchCard'
 import Step4PlaylistCard from '@/components/Step4PlaylistCard'
 import { refreshSpotifyToken, getSpotifyUserInfo } from '@/lib/api/spotify'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
+import { useAppleMusicAuth } from '@/hooks/useAppleMusicAuth'
+import { useYouTubeMusicAuth } from '@/hooks/useYouTubeMusicAuth'
 import { useOcrState } from '@/hooks/useOcrState'
 import { useStepState } from '@/hooks/useStepState'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useCardAnimation } from '@/hooks/useCardAnimation'
 import { NEO_CARD_COLORS } from '@/lib/constants/neo-color'
 
-function getAccessTokenFromUrl(): string | null {
-  if (typeof window === 'undefined') return null
+// 통합된 트랙 타입 정의
+type Track = SpotifyTrack | AppleMusicTrack | YouTubeMusicTrack
+
+// YouTube 사용자 정보 타입 정의
+interface YouTubeUser {
+  id: string
+  displayName: string
+  email?: string
+  imageUrl?: string
+}
+
+function getAccessTokenFromUrl(): { spotify?: string; youtube?: string } {
+  if (typeof window === 'undefined') return {}
   const url = new URL(window.location.href)
-  return url.searchParams.get('spotify_access_token')
+  return {
+    spotify: url.searchParams.get('spotify_access_token') || undefined,
+    youtube: url.searchParams.get('youtube_access_token') || undefined,
+  }
 }
 
 // URL에서 step 파라미터 가져오기
@@ -91,6 +117,46 @@ function clearSpotifyTokens() {
   }
 }
 
+// YouTube 토큰 관련 함수들
+function saveYouTubeTokens(
+  accessToken: string,
+  refreshToken: string,
+  expiresAt: number,
+) {
+  if (typeof window === 'undefined') return
+  try {
+    const tokens = {
+      accessToken,
+      refreshToken,
+      expiresAt,
+      timestamp: Date.now(),
+    }
+    localStorage.setItem('snaptunes_youtube_tokens', JSON.stringify(tokens))
+  } catch (error) {
+    console.warn('Failed to save YouTube tokens:', error)
+  }
+}
+
+function loadYouTubeTokens() {
+  if (typeof window === 'undefined') return null
+  try {
+    const saved = localStorage.getItem('snaptunes_youtube_tokens')
+    return saved ? JSON.parse(saved) : null
+  } catch (error) {
+    console.warn('Failed to load YouTube tokens:', error)
+    return null
+  }
+}
+
+function clearYouTubeTokens() {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem('snaptunes_youtube_tokens')
+  } catch (error) {
+    console.warn('Failed to clear YouTube tokens:', error)
+  }
+}
+
 export default function Home() {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -124,7 +190,67 @@ export default function Home() {
     handleSpotifyAuth,
     handleSpotifyLogout,
   } = useSpotifyAuth()
-  const [spotifyTracks, setSpotifyTracks] = useState<SpotifyTrack[]>([])
+  const {
+    isAuthorized: isAppleMusicAuthorized,
+    getAccessToken,
+    authorize: authorizeAppleMusic,
+    userInfo: appleMusicUser,
+  } = useAppleMusicAuth()
+  const {
+    youtubeToken,
+    setYouTubeToken,
+    youtubeUser,
+    setYouTubeUser,
+    getValidYouTubeToken,
+    getYouTubeUserInfo,
+  } = useYouTubeMusicAuth()
+  const [selectedPlatform, setSelectedPlatform] = useState<
+    'spotify' | 'apple-music' | 'youtube-music' | null
+  >(null)
+
+  function saveSelectedPlatform(
+    platform: 'spotify' | 'apple-music' | 'youtube-music',
+  ) {
+    try {
+      localStorage.setItem('snaptunes_platform', platform)
+    } catch {}
+  }
+
+  function loadSelectedPlatform():
+    | 'spotify'
+    | 'apple-music'
+    | 'youtube-music'
+    | null {
+    try {
+      const v = localStorage.getItem('snaptunes_platform')
+      if (v === 'spotify' || v === 'apple-music' || v === 'youtube-music')
+        return v
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const handlePlatformSelect = (
+    p: 'spotify' | 'apple-music' | 'youtube-music',
+  ) => {
+    setSelectedPlatform(p)
+    saveSelectedPlatform(p)
+    // 플랫폼 선택 즉시 인증 시작
+    if (p === 'spotify') {
+      handleSpotifyAuth()
+    } else if (p === 'apple-music') {
+      authorizeAppleMusic()
+    }
+  }
+
+  const handlePlatformReset = () => {
+    setSelectedPlatform(null)
+    try {
+      localStorage.removeItem('snaptunes_platform')
+    } catch {}
+  }
+  const [tracks, setTracks] = useState<Track[]>([])
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([])
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null)
   const [playlistName, setPlaylistName] = useState(t('defaults.playlistName'))
@@ -136,8 +262,17 @@ export default function Home() {
       setPlaylistName(playlistTitle)
     }
   }, [playlistTitle])
+  const isAnyServiceAuthorized =
+    selectedPlatform === 'spotify'
+      ? !!spotifyToken
+      : selectedPlatform === 'apple-music'
+        ? isAppleMusicAuthorized
+        : selectedPlatform === 'youtube-music'
+          ? !!youtubeToken
+          : false
+
   const { step, setStep, goToStep } = useStepState({
-    spotifyToken,
+    isAuthorized: isAnyServiceAuthorized,
     isExtracted,
     isSearched,
     t,
@@ -148,18 +283,59 @@ export default function Home() {
     null,
   )
 
+  // step 변경을 추적하여 수동 이동인지 확인
+  const customGoToStep = (targetStep: number) => {
+    if (targetStep === 1) {
+      setShouldAutoMoveToStep2(false)
+    }
+    goToStep(targetStep)
+  }
+
   // 카드 내용 정의
   const stepCards = [
     {
       color: NEO_CARD_COLORS[0],
       content: (
-        <Step1AuthCard
+        <Step1UnifiedCard
           t={t}
+          selectedPlatform={selectedPlatform}
+          onPlatformSelect={(p) => {
+            if (!p) {
+              handlePlatformReset()
+              return
+            }
+            handlePlatformSelect(p)
+          }}
           spotifyToken={spotifyToken}
           spotifyUser={spotifyUser}
-          handleSpotifyAuth={handleSpotifyAuth}
-          handleSpotifyLogout={handleSpotifyLogout}
-          goToStep={goToStep}
+          onSpotifyAuth={handleSpotifyAuth}
+          onSpotifyLogout={() => {
+            handleSpotifyLogout()
+            handlePlatformReset()
+          }}
+          isAppleAuthorized={isAppleMusicAuthorized}
+          appleMusicUser={appleMusicUser}
+          onAppleAuthorize={authorizeAppleMusic}
+          onAppleUnauthorize={() => {
+            // Apple Music unauthorize는 훅 내부 제공 X: 선택만 초기화
+            handlePlatformReset()
+          }}
+          youtubeToken={youtubeToken}
+          youtubeUser={youtubeUser}
+          onYouTubeAuth={() => {
+            // 리디렉션 인증
+            window.location.href = '/api/auth/youtube-music'
+          }}
+          onYouTubeLogout={() => {
+            // 로컬 유튜브 토큰 제거
+            try {
+              localStorage.removeItem('snaptunes_youtube_tokens')
+            } catch {}
+            setYouTubeToken(null)
+            setYouTubeUser(null)
+            handlePlatformReset()
+          }}
+          goToStep={customGoToStep}
         />
       ),
       minHeight: 260,
@@ -179,12 +355,12 @@ export default function Home() {
           handleExtractSongs={handleExtractSongs}
           handleExtractSongsV2={handleExtractSongsV2}
           isExtracted={isExtracted}
-          goToStep={goToStep}
+          goToStep={customGoToStep}
           imageData={imageData}
           image={image}
           setImage={setImage}
           setImageData={setImageData}
-          locale={(params.locale as string) || 'en'}
+          locale={typeof params.locale === 'string' ? params.locale : 'en'}
         />
       ),
       minHeight: 340,
@@ -195,11 +371,13 @@ export default function Home() {
         <Step3SearchCard
           t={t}
           step={step}
-          spotifyTracks={spotifyTracks}
+          selectedPlatform={selectedPlatform}
+          tracks={tracks}
           selectedTrackIds={selectedTrackIds}
           handleTrackCheckbox={handleTrackCheckbox}
           isSearched={isSearched}
-          goToStep={goToStep}
+          goToStep={customGoToStep}
+          isLoading={isLoading}
         />
       ),
       minHeight: 340,
@@ -210,11 +388,20 @@ export default function Home() {
         <Step4PlaylistCard
           t={t}
           step={step}
+          selectedPlatform={selectedPlatform}
           playlistName={playlistName}
           setPlaylistName={setPlaylistName}
           isLoading={isLoading}
-          spotifyToken={spotifyToken}
-          spotifyTracks={spotifyTracks}
+          isAuthorized={
+            selectedPlatform === 'spotify'
+              ? !!spotifyToken
+              : selectedPlatform === 'apple-music'
+                ? isAppleMusicAuthorized
+                : selectedPlatform === 'youtube-music'
+                  ? !!youtubeToken
+                  : false
+          }
+          tracks={tracks}
           selectedTrackIds={selectedTrackIds}
           handleCreatePlaylist={handleCreatePlaylist}
           playlistUrl={playlistUrl}
@@ -252,61 +439,125 @@ export default function Home() {
     if (contentRef.current) {
       setCardHeight(contentRef.current.offsetHeight + 32) // 패딩 고려
     }
-  }, [contentIdx, ocrResult.length, spotifyTracks.length, playlistUrl])
+  }, [contentIdx, ocrResult.length, tracks.length, playlistUrl])
 
-  // Spotify 토큰 관리
+  // 토큰 관리 (Spotify & YouTube Music)
   useEffect(() => {
-    const initializeSpotifyToken = async () => {
+    const initializeTokens = async () => {
+      // 0. 선택된 플랫폼 복원
+      const savedPlatform = loadSelectedPlatform()
+      if (savedPlatform) setSelectedPlatform(savedPlatform)
+
       // 1. URL에서 토큰 확인 (새로운 인증)
-      const urlToken = getAccessTokenFromUrl()
-      const urlRefreshToken = new URL(window.location.href).searchParams.get(
-        'spotify_refresh_token',
-      )
+      const urlTokens = getAccessTokenFromUrl()
+      const url = new URL(window.location.href)
 
-      if (urlToken && urlRefreshToken) {
-        // 새로운 인증: 토큰 저장
-        const expiresAt = Date.now() + 3600 * 1000 // 1시간 후 만료
-        saveSpotifyTokens(urlToken, urlRefreshToken, expiresAt)
-        setSpotifyToken(urlToken)
+      // Spotify 토큰 처리
+      if (urlTokens.spotify) {
+        const urlRefreshToken = url.searchParams.get('spotify_refresh_token')
+        if (urlRefreshToken) {
+          const expiresAt = Date.now() + 3600 * 1000 // 1시간 후 만료
+          saveSpotifyTokens(urlTokens.spotify, urlRefreshToken, expiresAt)
+          setSpotifyToken(urlTokens.spotify)
+          saveSelectedPlatform('spotify')
+          setSelectedPlatform('spotify')
+          setShouldAutoMoveToStep2(true)
+        }
+      }
 
-        // URL에서 토큰 제거 (보안)
-        const url = new URL(window.location.href)
+      // YouTube Music 토큰 처리
+      if (urlTokens.youtube) {
+        const urlRefreshToken = url.searchParams.get('youtube_refresh_token')
+        if (urlRefreshToken) {
+          const expiresAt = Date.now() + 3600 * 1000 // 1시간 후 만료
+          saveYouTubeTokens(urlTokens.youtube, urlRefreshToken, expiresAt)
+          setYouTubeToken(urlTokens.youtube)
+          saveSelectedPlatform('youtube-music')
+          setSelectedPlatform('youtube-music')
+          setShouldAutoMoveToStep2(true)
+        }
+      }
+
+      // URL에서 토큰들이 있으면 제거
+      if (urlTokens.spotify || urlTokens.youtube) {
         url.searchParams.delete('spotify_access_token')
         url.searchParams.delete('spotify_refresh_token')
+        url.searchParams.delete('youtube_access_token')
+        url.searchParams.delete('youtube_refresh_token')
         window.history.replaceState({}, document.title, url.toString())
         return
       }
 
-      // 2. localStorage에서 저장된 토큰 확인
-      const savedTokens = loadSpotifyTokens()
-      if (savedTokens && savedTokens.accessToken && savedTokens.refreshToken) {
+      // 2. localStorage에서 Spotify 토큰 확인 및 리프레시
+      const savedSpotifyTokens = loadSpotifyTokens()
+      if (
+        savedSpotifyTokens &&
+        savedSpotifyTokens.accessToken &&
+        savedSpotifyTokens.refreshToken
+      ) {
         const now = Date.now()
-
-        // 토큰이 만료되었는지 확인 (5분 여유)
-        if (savedTokens.expiresAt > now + 5 * 60 * 1000) {
-          // 토큰이 아직 유효함
-          setSpotifyToken(savedTokens.accessToken)
-          return
-        }
-
-        // 토큰이 만료되었거나 곧 만료됨: 갱신 시도
-        const refreshed = await refreshSpotifyToken(savedTokens.refreshToken)
-        if (refreshed) {
-          const newExpiresAt = Date.now() + refreshed.expiresIn * 1000
-          saveSpotifyTokens(
-            refreshed.accessToken,
-            refreshed.refreshToken,
-            newExpiresAt,
-          )
-          setSpotifyToken(refreshed.accessToken)
+        if (savedSpotifyTokens.expiresAt > now + 5 * 60 * 1000) {
+          setSpotifyToken(savedSpotifyTokens.accessToken)
         } else {
-          // 갱신 실패: 저장된 토큰 삭제
-          clearSpotifyTokens()
+          const refreshed = await refreshSpotifyToken(
+            savedSpotifyTokens.refreshToken,
+          )
+          if (refreshed) {
+            const newExpiresAt = Date.now() + refreshed.expiresIn * 1000
+            saveSpotifyTokens(
+              refreshed.accessToken,
+              refreshed.refreshToken,
+              newExpiresAt,
+            )
+            setSpotifyToken(refreshed.accessToken)
+          } else {
+            clearSpotifyTokens()
+          }
+        }
+      }
+
+      // 3. localStorage에서 YouTube 토큰 확인 및 리프레시
+      const savedYouTubeTokens = loadYouTubeTokens()
+      if (
+        savedYouTubeTokens &&
+        savedYouTubeTokens.accessToken &&
+        savedYouTubeTokens.refreshToken
+      ) {
+        const now = Date.now()
+        if (savedYouTubeTokens.expiresAt > now + 5 * 60 * 1000) {
+          setYouTubeToken(savedYouTubeTokens.accessToken)
+        } else {
+          const refreshed = await (async () => {
+            try {
+              const res = await fetch('/api/auth/youtube-music/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  refreshToken: savedYouTubeTokens.refreshToken,
+                }),
+              })
+              if (!res.ok) return null
+              return await res.json()
+            } catch {
+              return null
+            }
+          })()
+          if (refreshed) {
+            const newExpiresAt = Date.now() + refreshed.expires_in * 1000
+            saveYouTubeTokens(
+              refreshed.access_token,
+              refreshed.refresh_token || savedYouTubeTokens.refreshToken,
+              newExpiresAt,
+            )
+            setYouTubeToken(refreshed.access_token)
+          } else {
+            clearYouTubeTokens()
+          }
         }
       }
     }
 
-    initializeSpotifyToken()
+    initializeTokens()
   }, [])
 
   // URL에서 step 파라미터 복원 (언어 변경 시)
@@ -322,9 +573,9 @@ export default function Home() {
     setStepInUrl(step)
   }, [step])
 
-  // Spotify 토큰이 설정될 때 사용자 정보 가져오기
+  // 토큰이 설정될 때 사용자 정보 가져오기
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const fetchSpotifyUserInfo = async () => {
       if (spotifyToken) {
         const userInfo = await getSpotifyUserInfo(spotifyToken)
         setSpotifyUser(userInfo)
@@ -333,31 +584,75 @@ export default function Home() {
       }
     }
 
-    fetchUserInfo()
+    fetchSpotifyUserInfo()
   }, [spotifyToken])
 
-  // Spotify에서 곡 검색
-  async function handleSearchSpotify() {
-    const validToken = await getValidSpotifyToken(setSpotifyToken)
-    if (!validToken) {
-      toast.error(t('errors.spotifyAuthRequired'))
+  useEffect(() => {
+    const fetchYouTubeUserInfo = async () => {
+      if (youtubeToken) {
+        const userInfo = await getYouTubeUserInfo(youtubeToken)
+        setYouTubeUser(userInfo)
+      } else {
+        setYouTubeUser(null)
+      }
+    }
+
+    fetchYouTubeUserInfo()
+  }, [youtubeToken])
+
+  // 음악 서비스에서 곡 검색
+  async function handleSearchMusic() {
+    if (!selectedPlatform) {
+      toast.error('음악 서비스를 선택해주세요')
       return
     }
+
     if (ocrResult.length === 0) {
       toast.error(t('errors.noSongTitles'))
       return
     }
+
     setIsLoading(true)
-    setSpotifyTracks([])
+    setTracks([])
     setPlaylistUrl(null)
     setSelectedTrackIds([])
     setIsSearched(false)
+
     try {
-      const tracks = await searchSongsInSpotify(ocrResult, validToken)
-      setSpotifyTracks(tracks)
-      setSelectedTrackIds(
-        tracks.filter((t) => t.found && t.id).map((t) => t.id),
-      )
+      if (selectedPlatform === 'spotify') {
+        const validToken = await getValidSpotifyToken(setSpotifyToken)
+        if (!validToken) {
+          toast.error(t('errors.spotifyAuthRequired'))
+          return
+        }
+        const tracks = await searchSongsInSpotify(ocrResult, validToken)
+        setTracks(tracks)
+        setSelectedTrackIds(
+          tracks.filter((t) => t.found && t.id).map((t) => t.id),
+        )
+      } else if (selectedPlatform === 'apple-music') {
+        const accessToken = await getAccessToken()
+        if (!accessToken) {
+          toast.error(t('errors.appleMusicAuthRequired'))
+          return
+        }
+        const tracks = await searchSongsInAppleMusic(ocrResult, accessToken)
+        setTracks(tracks)
+        setSelectedTrackIds(
+          tracks.filter((t) => t.found && t.id).map((t) => t.id),
+        )
+      } else if (selectedPlatform === 'youtube-music') {
+        const validToken = await getValidYouTubeToken(setYouTubeToken)
+        if (!validToken) {
+          toast.error(t('errors.youtubeMusicAuthRequired'))
+          return
+        }
+        const tracks = await searchSongsInYouTubeMusic(ocrResult, validToken)
+        setTracks(tracks)
+        setSelectedTrackIds(
+          tracks.filter((t) => t.found && t.id).map((t) => t.id),
+        )
+      }
       setIsSearched(true)
     } catch (error) {
       toast.error(
@@ -371,7 +666,7 @@ export default function Home() {
   // 3단계 진입 시 자동 검색
   useEffect(() => {
     if (step === 3 && !isSearched && !isLoading) {
-      handleSearchSpotify()
+      handleSearchMusic()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
@@ -385,32 +680,71 @@ export default function Home() {
     )
   }
 
-  // Spotify 플레이리스트 생성
+  // 플레이리스트 생성
   async function handleCreatePlaylist() {
-    const validToken = await getValidSpotifyToken(setSpotifyToken)
-    if (!validToken) {
-      toast.error(t('errors.spotifyAuthRequired'))
+    if (!selectedPlatform) {
+      toast.error('음악 서비스를 선택해주세요')
       return
     }
-    const foundTracks = spotifyTracks
+
+    const foundTracks = tracks
       .filter((t) => t.found && t.id && selectedTrackIds.includes(t.id))
       .map((t) => t.id)
     if (foundTracks.length === 0) {
       toast.error(t('errors.noSongsToAdd'))
       return
     }
+
     setIsLoading(true)
     setPlaylistUrl(null)
     setPlaylistMeta(null)
+
     try {
-      const meta = await createSpotifyPlaylist(
-        foundTracks,
-        validToken,
-        playlistName || t('defaults.playlistName'),
-      )
-      if (meta) {
-        setPlaylistUrl(meta.playlistUrl)
-        setPlaylistMeta(meta)
+      if (selectedPlatform === 'spotify') {
+        const validToken = await getValidSpotifyToken(setSpotifyToken)
+        if (!validToken) {
+          toast.error(t('errors.spotifyAuthRequired'))
+          return
+        }
+        const meta = await createSpotifyPlaylist(
+          foundTracks,
+          validToken,
+          playlistName || t('defaults.playlistName'),
+        )
+        if (meta) {
+          setPlaylistUrl(meta.playlistUrl)
+          setPlaylistMeta(meta)
+        }
+      } else if (selectedPlatform === 'apple-music') {
+        const accessToken = await getAccessToken()
+        if (!accessToken) {
+          toast.error(t('errors.appleMusicAuthRequired'))
+          return
+        }
+        const meta = await createAppleMusicPlaylist(
+          foundTracks,
+          accessToken,
+          playlistName || t('defaults.playlistName'),
+        )
+        if (meta) {
+          setPlaylistUrl(meta.playlistUrl)
+          setPlaylistMeta(meta)
+        }
+      } else if (selectedPlatform === 'youtube-music') {
+        const validToken = await getValidYouTubeToken(setYouTubeToken)
+        if (!validToken) {
+          toast.error(t('errors.youtubeMusicAuthRequired'))
+          return
+        }
+        const meta = await createYouTubeMusicPlaylist(
+          foundTracks,
+          validToken,
+          playlistName || t('defaults.playlistName'),
+        )
+        if (meta) {
+          setPlaylistUrl(meta.playlistUrl)
+          setPlaylistMeta(meta)
+        }
       }
     } catch (error) {
       toast.error(
@@ -422,6 +756,16 @@ export default function Home() {
       setIsLoading(false)
     }
   }
+
+  // 인증 성공 직후에만 자동으로 Step 2로 이동
+  const [shouldAutoMoveToStep2, setShouldAutoMoveToStep2] = useState(false)
+
+  useEffect(() => {
+    if (step === 1 && isAnyServiceAuthorized && shouldAutoMoveToStep2) {
+      goToStep(2)
+      setShouldAutoMoveToStep2(false)
+    }
+  }, [isAnyServiceAuthorized, step, goToStep, shouldAutoMoveToStep2])
 
   const { isDark } = useDarkMode()
 
@@ -453,7 +797,7 @@ export default function Home() {
           <Button
             variant="default"
             size="icon"
-            onClick={() => goToStep(step - 1)}
+            onClick={() => customGoToStep(step - 1)}
             disabled={step === 1}
             aria-label={t('navigation.previous')}
           >
@@ -463,7 +807,7 @@ export default function Home() {
             {[1, 2, 3, 4].map((s) => (
               <button
                 key={s}
-                onClick={() => goToStep(s)}
+                onClick={() => customGoToStep(s)}
                 className={
                   `w-6 h-6 flex items-center justify-center font-bold text-xs ` +
                   `border-4 border-black ` +
@@ -482,10 +826,10 @@ export default function Home() {
           <Button
             variant="default"
             size="icon"
-            onClick={() => goToStep(step + 1)}
+            onClick={() => customGoToStep(step + 1)}
             disabled={
               step === stepCards.length ||
-              (step === 1 && !spotifyToken) ||
+              (step === 1 && !isAnyServiceAuthorized) ||
               (step === 2 && !isExtracted) ||
               (step === 3 && !isSearched)
             }
