@@ -32,15 +32,6 @@ function loadSpotifyTokens() {
   }
 }
 
-function clearSpotifyTokens() {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.removeItem('snaptunes_spotify_tokens')
-  } catch (error) {
-    console.warn('Failed to clear Spotify tokens:', error)
-  }
-}
-
 export function useSpotifyAuth() {
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null)
   const [spotifyUser, setSpotifyUser] = useState<{
@@ -49,6 +40,16 @@ export function useSpotifyAuth() {
     email: string
     imageUrl?: string
   } | null>(null)
+
+  // 토큰 제거 함수
+  const clearSpotifyTokens = () => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem('snaptunes_spotify_tokens')
+    } catch (error) {
+      console.warn('Failed to clear Spotify tokens:', error)
+    }
+  }
 
   // 안전한 토큰 가져오기 (필요시 갱신)
   const getValidSpotifyToken = useCallback(
@@ -195,5 +196,6 @@ export function useSpotifyAuth() {
     getValidSpotifyToken,
     handleSpotifyAuth,
     handleSpotifyLogout,
+    clearSpotifyTokens,
   }
 }

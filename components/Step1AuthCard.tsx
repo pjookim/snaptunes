@@ -62,6 +62,9 @@ export default function Step1AuthCard(props: Step1AuthCardProps) {
   if (!isAuthorizedForSelected) {
     return (
       <div className="space-y-4">
+        <span className="font-bold text-xl tracking-wider text-black">
+          {t('steps.step1.title')}
+        </span>
         <p className="text-sm text-neutral-700">
           {t('steps.step1.description')}
         </p>

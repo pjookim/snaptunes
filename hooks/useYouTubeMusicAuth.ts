@@ -32,15 +32,6 @@ function loadYouTubeTokens() {
   }
 }
 
-function clearYouTubeTokens() {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.removeItem('snaptunes_youtube_tokens')
-  } catch (error) {
-    console.warn('Failed to clear YouTube tokens:', error)
-  }
-}
-
 async function refreshYouTubeToken(refreshToken: string) {
   try {
     const res = await fetch('/api/auth/youtube-music/refresh', {
@@ -67,6 +58,16 @@ export function useYouTubeMusicAuth() {
     email?: string
     imageUrl?: string
   } | null>(null)
+
+  // 토큰 제거 함수
+  const clearYouTubeTokens = () => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem('snaptunes_youtube_tokens')
+    } catch (error) {
+      console.warn('Failed to clear YouTube tokens:', error)
+    }
+  }
 
   // YouTube 인증/토큰 초기화 및 사용자 정보 fetch
   useEffect(() => {
@@ -244,5 +245,6 @@ export function useYouTubeMusicAuth() {
     handleYouTubeAuth,
     handleYouTubeLogout,
     getYouTubeUserInfo,
+    clearYouTubeTokens,
   }
 }

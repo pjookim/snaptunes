@@ -41,6 +41,7 @@ import { useCardAnimation } from '@/hooks/useCardAnimation'
 import { NEO_CARD_COLORS } from '@/lib/constants/neo-color'
 import Link from 'next/link'
 import Image from 'next/image'
+import { PLATFORMS, Platform } from '@/types/state'
 
 // 통합된 트랙 타입 정의
 type Track = SpotifyTrack | AppleMusicTrack | YouTubeMusicTrack
@@ -102,6 +103,7 @@ export default function Home() {
     getValidSpotifyToken,
     handleSpotifyAuth,
     handleSpotifyLogout,
+    clearSpotifyTokens,
   } = useSpotifyAuth()
   const {
     isAuthorized: isAppleMusicAuthorized,
@@ -116,43 +118,40 @@ export default function Home() {
     setYouTubeUser,
     getValidYouTubeToken,
     getYouTubeUserInfo,
+    clearYouTubeTokens,
   } = useYouTubeMusicAuth()
-  const [selectedPlatform, setSelectedPlatform] = useState<
-    'spotify' | 'apple-music' | 'youtube-music' | null
-  >(null)
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
+    null,
+  )
 
-  function saveSelectedPlatform(
-    platform: 'spotify' | 'apple-music' | 'youtube-music',
-  ) {
+  function saveSelectedPlatform(platform: Platform) {
     try {
       localStorage.setItem('snaptunes_platform', platform)
     } catch {}
   }
 
-  function loadSelectedPlatform():
-    | 'spotify'
-    | 'apple-music'
-    | 'youtube-music'
-    | null {
+  function loadSelectedPlatform(): Platform | null {
     try {
       const v = localStorage.getItem('snaptunes_platform')
-      if (v === 'spotify' || v === 'apple-music' || v === 'youtube-music')
-        return v
+      if (
+        v === PLATFORMS.SPOTIFY ||
+        v === PLATFORMS.APPLE_MUSIC ||
+        v === PLATFORMS.YOUTUBE_MUSIC
+      )
+        return v as Platform
       return null
     } catch {
       return null
     }
   }
 
-  const handlePlatformSelect = (
-    p: 'spotify' | 'apple-music' | 'youtube-music',
-  ) => {
+  const handlePlatformSelect = (p: Platform) => {
     setSelectedPlatform(p)
     saveSelectedPlatform(p)
     // 플랫폼 선택 즉시 인증 시작
-    if (p === 'spotify') {
+    if (p === PLATFORMS.SPOTIFY) {
       handleSpotifyAuth()
-    } else if (p === 'apple-music') {
+    } else if (p === PLATFORMS.APPLE_MUSIC) {
       authorizeAppleMusic()
     }
   }
@@ -176,11 +175,11 @@ export default function Home() {
     }
   }, [playlistTitle])
   const isAnyServiceAuthorized =
-    selectedPlatform === 'spotify'
+    selectedPlatform === PLATFORMS.SPOTIFY
       ? !!spotifyToken
-      : selectedPlatform === 'apple-music'
+      : selectedPlatform === PLATFORMS.APPLE_MUSIC
         ? isAppleMusicAuthorized
-        : selectedPlatform === 'youtube-music'
+        : selectedPlatform === PLATFORMS.YOUTUBE_MUSIC
           ? !!youtubeToken
           : false
 
@@ -224,6 +223,7 @@ export default function Home() {
           onSpotifyAuth={handleSpotifyAuth}
           onSpotifyLogout={() => {
             handleSpotifyLogout()
+            clearSpotifyTokens()
             handlePlatformReset()
           }}
           isAppleAuthorized={isAppleMusicAuthorized}
@@ -231,6 +231,7 @@ export default function Home() {
           onAppleAuthorize={authorizeAppleMusic}
           onAppleUnauthorize={() => {
             // Apple Music unauthorize는 훅 내부 제공 X: 선택만 초기화
+            // Apple Music은 MusicKit을 사용하므로 별도 토큰 정리 불필요
             handlePlatformReset()
           }}
           youtubeToken={youtubeToken}
@@ -243,6 +244,7 @@ export default function Home() {
             // YouTube 훅에서 토큰 제거 처리
             setYouTubeToken(null)
             setYouTubeUser(null)
+            clearYouTubeTokens()
             handlePlatformReset()
           }}
           goToStep={customGoToStep}
@@ -303,11 +305,11 @@ export default function Home() {
           setPlaylistName={setPlaylistName}
           isLoading={isLoading}
           isAuthorized={
-            selectedPlatform === 'spotify'
+            selectedPlatform === PLATFORMS.SPOTIFY
               ? !!spotifyToken
-              : selectedPlatform === 'apple-music'
+              : selectedPlatform === PLATFORMS.APPLE_MUSIC
                 ? isAppleMusicAuthorized
-                : selectedPlatform === 'youtube-music'
+                : selectedPlatform === PLATFORMS.YOUTUBE_MUSIC
                   ? !!youtubeToken
                   : false
           }
@@ -368,8 +370,8 @@ export default function Home() {
         if (urlRefreshToken) {
           // Spotify 훅에서 자동으로 처리되므로 토큰만 설정
           setSpotifyToken(urlTokens.spotify)
-          saveSelectedPlatform('spotify')
-          setSelectedPlatform('spotify')
+          saveSelectedPlatform(PLATFORMS.SPOTIFY)
+          setSelectedPlatform(PLATFORMS.SPOTIFY)
           setShouldAutoMoveToStep2(true)
         }
       }
@@ -380,8 +382,8 @@ export default function Home() {
         if (urlRefreshToken) {
           // YouTube 훅에서 자동으로 처리되므로 토큰만 설정
           setYouTubeToken(urlTokens.youtube)
-          saveSelectedPlatform('youtube-music')
-          setSelectedPlatform('youtube-music')
+          saveSelectedPlatform(PLATFORMS.YOUTUBE_MUSIC)
+          setSelectedPlatform(PLATFORMS.YOUTUBE_MUSIC)
           setShouldAutoMoveToStep2(true)
         }
       }
@@ -459,7 +461,7 @@ export default function Home() {
     setIsSearched(false)
 
     try {
-      if (selectedPlatform === 'spotify') {
+      if (selectedPlatform === PLATFORMS.SPOTIFY) {
         const validToken = await getValidSpotifyToken(setSpotifyToken)
         if (!validToken) {
           toast.error(t('errors.spotifyAuthRequired'))
@@ -470,7 +472,7 @@ export default function Home() {
         setSelectedTrackIds(
           tracks.filter((t) => t.found && t.id).map((t) => t.id),
         )
-      } else if (selectedPlatform === 'apple-music') {
+      } else if (selectedPlatform === PLATFORMS.APPLE_MUSIC) {
         const accessToken = await getAccessToken()
         if (!accessToken) {
           toast.error(t('errors.appleMusicAuthRequired'))
@@ -481,7 +483,7 @@ export default function Home() {
         setSelectedTrackIds(
           tracks.filter((t) => t.found && t.id).map((t) => t.id),
         )
-      } else if (selectedPlatform === 'youtube-music') {
+      } else if (selectedPlatform === PLATFORMS.YOUTUBE_MUSIC) {
         const validToken = await getValidYouTubeToken(setYouTubeToken)
         if (!validToken) {
           toast.error(t('errors.youtubeMusicAuthRequired'))
@@ -540,7 +542,7 @@ export default function Home() {
     setPlaylistMeta(null)
 
     try {
-      if (selectedPlatform === 'spotify') {
+      if (selectedPlatform === PLATFORMS.SPOTIFY) {
         const validToken = await getValidSpotifyToken(setSpotifyToken)
         if (!validToken) {
           toast.error(t('errors.spotifyAuthRequired'))
@@ -555,7 +557,7 @@ export default function Home() {
           setPlaylistUrl(meta.playlistUrl)
           setPlaylistMeta(meta)
         }
-      } else if (selectedPlatform === 'apple-music') {
+      } else if (selectedPlatform === PLATFORMS.APPLE_MUSIC) {
         const accessToken = await getAccessToken()
         if (!accessToken) {
           toast.error(t('errors.appleMusicAuthRequired'))
@@ -570,7 +572,7 @@ export default function Home() {
           setPlaylistUrl(meta.playlistUrl)
           setPlaylistMeta(meta)
         }
-      } else if (selectedPlatform === 'youtube-music') {
+      } else if (selectedPlatform === PLATFORMS.YOUTUBE_MUSIC) {
         const validToken = await getValidYouTubeToken(setYouTubeToken)
         if (!validToken) {
           toast.error(t('errors.youtubeMusicAuthRequired'))

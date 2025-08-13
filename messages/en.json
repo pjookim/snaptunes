@@ -7,8 +7,8 @@
   },
   "steps": {
     "step1": {
-      "title": "1. Music Service Authentication",
-      "description": "You need to log in with your music service account to create a playlist.",
+      "title": "Start Your Personal Playlist",
+      "description": "First, select the music service you’d like to connect.",
       "button": "Authenticate with Music Service",
       "buttonAuthenticated": "Music Service Authenticated",
       "logout": "Logout",

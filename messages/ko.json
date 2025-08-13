@@ -7,8 +7,8 @@
   },
   "steps": {
     "step1": {
-      "title": "1. 음악 서비스 인증",
-      "description": "플레이리스트를 생성하려면 음악 서비스 계정으로 로그인해야 합니다.",
+      "title": "나만의 플레이리스트 시작하기",
+      "description": "먼저 사용할 음악 서비스를 선택하세요.",
       "button": "음악 서비스로 인증하기",
       "buttonAuthenticated": "음악 서비스 인증 완료",
       "logout": "로그아웃",
