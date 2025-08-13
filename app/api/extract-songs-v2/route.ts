@@ -48,6 +48,7 @@ interface ExtractSongsContent {
   songs?: Song[]
   playlist_title?: string
   data?: Song[] // 혹시 data로 올 경우
+  extraction_type?: 'extracted' | 'recommended' | 'mixed'
 }
 
 // 번역 함수 타입 정의
@@ -74,32 +75,46 @@ function getCommonSystemPrompt(locale: string): string {
   if (isKorean) {
     return `당신은 음악 분석 전문가입니다. 제공된 입력을 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천합니다.
 
+응답 규칙:
+1. 이미지나 텍스트에 명확한 곡 목록이 있다면, 그대로 추출하세요 (곡 수 제한 없음)
+2. 곡 목록이 부족하거나 없는 경우에만 10-15곡을 추천하세요
+3. 추출된 곡이 10곡 미만인 경우, 해당 장르나 분위기에 맞는 곡을 추가하여 10-15곡으로 보완하세요
+4. 추출된 곡이 15곡을 초과하는 경우, 중복이나 품질이 낮은 곡을 제거하여 15곡 이하로 정리하세요
+
 항상 다음 형식의 유효한 JSON 객체로 응답하세요:
 {
   "songs": [ { "title": "곡 제목", "artist": "아티스트" } ],
-  "playlist_title": "이 곡 목록에 대한 추천 플레이리스트 제목"
+  "playlist_title": "이 곡 목록에 대한 추천 플레이리스트 제목",
+  "extraction_type": "extracted" | "recommended" | "mixed"
 }
 
-- 항상 songs 배열에 10-15곡을 반환하세요
 - 제목이 비어있지 않은 곡만 포함하세요
 - 아티스트가 명확하지 않으면 "artist"를 빈 문자열로 설정하세요
 - 적절한 플레이리스트 제목을 추천하기 어려우면 "playlist_title"을 빈 문자열로 설정하세요
 - 사람들이 실제로 듣고 싶어할 만한 진짜 인기곡들을 반환하세요
-- 한국어 곡과 영어 곡을 모두 고려하세요`
+- 한국어 곡과 영어 곡을 모두 고려하세요
+- extraction_type으로 추출 방식 구분: "extracted"(원본 추출), "recommended"(추천), "mixed"(추출+보완)`
   } else {
     return `You are a music analysis expert. Analyze the provided input and extract song information or recommend songs based on the content.
+
+Response Rules:
+1. If there's a clear song list in the image or text, extract it as-is (no song count limit)
+2. Only recommend 10-15 songs if the song list is insufficient or missing
+3. If extracted songs are less than 10, supplement with genre/mood-appropriate songs to reach 10-15
+4. If extracted songs exceed 15, remove duplicates or low-quality songs to keep under 15
 
 Always respond with a valid JSON object in this format:
 {
   "songs": [ { "title": "Song Title", "artist": "Artist" } ],
-  "playlist_title": "A recommended playlist title for this list of songs"
+  "playlist_title": "A recommended playlist title for this list of songs",
+  "extraction_type": "extracted" | "recommended" | "mixed"
 }
 
-- Always return 10-15 songs in the songs array
 - Only include songs where the "title" is a non-empty string
 - If the artist is not clear, set "artist" to an empty string
 - If it is difficult to recommend a suitable playlist title, set "playlist_title" to an empty string
-- Make sure to return real, popular songs that people would actually want to listen to`
+- Make sure to return real, popular songs that people would actually want to listen to
+- extraction_type indicates the method: "extracted"(original), "recommended"(suggested), "mixed"(extracted+supplemented)`
   }
 }
 
@@ -117,9 +132,12 @@ function getPromptsByLocale(
         systemPrompt,
         userPrompt: `이 이미지를 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천하세요.
 
-이미지에 곡 제목과 아티스트가 명확하게 나열되어 있다면 JSON 형식으로 추출하세요.
-이미지가 분위기, 테마, 맥락(파티, 운동, 공부 등)을 보여준다면 해당 맥락에 맞는 인기곡 10-15곡을 추천하세요.
-이미지가 불분명하거나 음악 관련 내용이 없다면 다양한 장르의 인기곡 10-15곡을 추천하세요.
+우선순위:
+1. 이미지에 곡 제목과 아티스트가 명확하게 나열되어 있다면 정확히 추출하세요
+2. 추출된 곡이 10곡 미만이면 해당 장르/분위기에 맞는 곡을 추가하여 10-15곡으로 보완하세요
+3. 추출된 곡이 15곡을 초과하면 중복이나 품질이 낮은 곡을 제거하여 15곡 이하로 정리하세요
+4. 이미지가 분위기, 테마, 맥락(파티, 운동, 공부 등)을 보여준다면 해당 맥락에 맞는 인기곡 10-15곡을 추천하세요
+5. 이미지가 불분명하거나 음악 관련 내용이 없다면 다양한 장르의 인기곡 10-15곡을 추천하세요
 
 예시:
 - 체육관/운동 이미지 → 활기찬, 동기부여가 되는 곡 추천
@@ -127,14 +145,19 @@ function getPromptsByLocale(
 - 공부/사무실 이미지 → 차분하고 기악곡 추천
 - 자연/여행 이미지 → 평화롭고 앰비언트한 곡 추천
 
-사람들이 실제로 듣고 싶어할 만한 인기곡 10-15곡을 반환하세요. 한국어 곡과 영어 곡을 모두 포함하세요.`,
+사람들이 실제로 듣고 싶어할 만한 인기곡을 반환하세요. 한국어 곡과 영어 곡을 모두 포함하세요.`,
       }
     } else {
       return {
         systemPrompt,
         userPrompt: `Analyze this image and extract song information or recommend songs based on the content.
 
-If the image contains specific song titles and artists, extract them. If it shows a mood, activity, or theme, recommend popular songs that fit that context.
+Priority:
+1. If the image contains specific song titles and artists, extract them accurately
+2. If extracted songs are less than 10, supplement with genre/mood-appropriate songs to reach 10-15
+3. If extracted songs exceed 15, remove duplicates or low-quality songs to keep under 15
+4. If it shows a mood, activity, or theme, recommend popular songs that fit that context
+5. If the image is unclear or not music-related, recommend diverse genre popular songs
 
 Examples:
 - Gym/workout image → recommend energetic, motivational songs
@@ -142,7 +165,7 @@ Examples:
 - Study/office image → recommend calm, instrumental songs
 - Nature/travel image → recommend peaceful, ambient songs
 
-Make sure to return 10-15 popular, well-known songs that people would actually want to listen to.`,
+Make sure to return popular, well-known songs that people would actually want to listen to.`,
       }
     }
   } else if (inputType === 'text') {
@@ -151,9 +174,12 @@ Make sure to return 10-15 popular, well-known songs that people would actually w
         systemPrompt,
         userPrompt: `이 텍스트를 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천하세요.
 
-텍스트에 곡 제목과 아티스트가 명확하게 나열되어 있다면 JSON 형식으로 추출하세요.
-텍스트가 분위기, 테마, 맥락(운동할 때 듣는 곡, 파티 음악, 공부 플레이리스트 등)을 설명한다면 해당 맥락에 맞는 인기곡 10-15곡을 추천하세요.
-텍스트가 불분명하거나 음악 관련 내용이 없다면 다양한 장르의 인기곡 10-15곡을 추천하세요.
+우선순위:
+1. 텍스트에 곡 제목과 아티스트가 명확하게 나열되어 있다면 정확히 추출하세요
+2. 추출된 곡이 10곡 미만이면 해당 장르/분위기에 맞는 곡을 추가하여 10-15곡으로 보완하세요
+3. 추출된 곡이 15곡을 초과하면 중복이나 품질이 낮은 곡을 제거하여 15곡 이하로 정리하세요
+4. 텍스트가 분위기, 테마, 맥락(운동할 때 듣는 곡, 파티 음악, 공부 플레이리스트 등)을 설명한다면 해당 맥락에 맞는 인기곡 10-15곡을 추천하세요
+5. 텍스트가 불분명하거나 음악 관련 내용이 없다면 다양한 장르의 인기곡 10-15곡을 추천하세요
 
 예시:
 - "운동할 때 듣는 곡" → 활기찬, 동기부여가 되는 곡 추천
@@ -168,7 +194,12 @@ Make sure to return 10-15 popular, well-known songs that people would actually w
         systemPrompt,
         userPrompt: `Analyze this text and extract song information or recommend songs based on the content.
 
-If the text mentions specific songs, extract them. If it describes a mood or activity, recommend popular songs that fit that theme.
+Priority:
+1. If the text mentions specific songs, extract them accurately
+2. If extracted songs are less than 10, supplement with genre/mood-appropriate songs to reach 10-15
+3. If extracted songs exceed 15, remove duplicates or low-quality songs to keep under 15
+4. If it describes a mood or activity, recommend popular songs that fit that theme
+5. If the text is unclear or not music-related, recommend diverse genre popular songs
 
 Examples:
 - "workout music" → recommend energetic, motivational songs
@@ -186,11 +217,12 @@ Text:`,
         systemPrompt,
         userPrompt: `이미지와 텍스트를 모두 분석하고 곡 정보를 추출하거나 내용에 맞는 곡을 추천하세요.
 
-이미지와 텍스트를 모두 고려하여:
-- 이미지에 곡 목록이 있다면 추출
-- 텍스트에 곡 목록이 있다면 추출
-- 이미지의 분위기와 텍스트의 테마를 결합하여 추천
-- 텍스트가 이미지의 맥락을 설명하는 경우도 고려
+우선순위:
+1. 이미지와 텍스트에서 곡 목록을 우선적으로 추출하세요
+2. 추출된 곡이 10곡 미만이면 해당 장르/분위기에 맞는 곡을 추가하여 10-15곡으로 보완하세요
+3. 추출된 곡이 15곡을 초과하면 중복이나 품질이 낮은 곡을 제거하여 15곡 이하로 정리하세요
+4. 이미지의 분위기와 텍스트의 테마를 결합하여 더 정확한 추천을 제공하세요
+5. 텍스트가 이미지의 맥락을 설명하는 경우도 고려하여 통합 분석하세요
 
 텍스트: `,
       }
@@ -199,10 +231,12 @@ Text:`,
         systemPrompt,
         userPrompt: `Analyze both the image and text to extract song information or recommend songs based on the content.
 
-Consider both image and text to:
-- Extract song lists from either source
-- Combine mood and themes for better recommendations
-- Use text as context for image when relevant
+Priority:
+1. Extract song lists from both image and text as priority
+2. If extracted songs are less than 10, supplement with genre/mood-appropriate songs to reach 10-15
+3. If extracted songs exceed 15, remove duplicates or low-quality songs to keep under 15
+4. Combine mood and themes from both sources for better recommendations
+5. Use text as context for image when relevant for integrated analysis
 
 Text:`,
       }
@@ -304,10 +338,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model:
-          inputType === 'image' || inputType === 'both'
-            ? 'gpt-5-nano'
-            : 'gpt-5-mini',
+        model: process.env.OPENAI_MODEL || 'gpt-5-mini',
         messages,
         response_format: { type: 'json_object' },
       }),
@@ -343,10 +374,15 @@ export async function POST(req: NextRequest) {
     // songs 필드만 추출, 없으면 빈 배열 반환
     let songs: Song[] = []
     let playlistTitle: string = ''
+    let extractionType: string = 'unknown'
+
     if (isSongArray(parsedContent.songs)) {
       songs = parsedContent.songs
       if (typeof parsedContent.playlist_title === 'string') {
         playlistTitle = parsedContent.playlist_title
+      }
+      if (typeof parsedContent.extraction_type === 'string') {
+        extractionType = parsedContent.extraction_type
       }
     } else if (isSongArray(parsedContent.data)) {
       // 혹시 data 필드로 올 경우도 대비
@@ -354,13 +390,21 @@ export async function POST(req: NextRequest) {
       if (typeof parsedContent.playlist_title === 'string') {
         playlistTitle = parsedContent.playlist_title
       }
+      if (typeof parsedContent.extraction_type === 'string') {
+        extractionType = parsedContent.extraction_type
+      }
     } else if (isSongArray(parsedContent as unknown)) {
       // 혹시 배열만 올 경우
       songs = parsedContent as unknown as Song[]
       // playlist_title은 없음
     }
 
-    return NextResponse.json({ songs, playlist_title: playlistTitle })
+    return NextResponse.json({
+      songs,
+      playlist_title: playlistTitle,
+      extraction_type: extractionType,
+      total_songs: songs.length,
+    })
   } catch (error) {
     console.error('[API] 처리 중 오류 발생:', error)
     return NextResponse.json(
