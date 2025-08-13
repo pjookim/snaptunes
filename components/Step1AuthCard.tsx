@@ -1,58 +1,13 @@
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { Music, Play } from 'lucide-react'
-
-type Platform = 'spotify' | 'apple-music' | 'youtube-music'
-
-interface SpotifyUser {
-  id: string
-  displayName: string
-  email: string
-  imageUrl?: string
-}
-
-interface YouTubeUser {
-  id: string
-  displayName: string
-  imageUrl?: string
-}
-
-interface AppleMusicUser {
-  id?: string
-  displayName: string
-  email?: string
-  imageUrl?: string
-  hasAppleMusicSubscription?: boolean
-  libraryPlaylistsCount?: number
-}
-
-interface Props {
-  t: (key: string) => string
-  selectedPlatform: Platform | null
-  onPlatformSelect: (p: Platform | null) => void
-
-  // Spotify
-  spotifyToken: string | null
-  spotifyUser: SpotifyUser | null
-  onSpotifyAuth: () => void
-  onSpotifyLogout: () => void
-
-  // Apple Music
-  isAppleAuthorized: boolean
-  appleMusicUser: AppleMusicUser | null
-  onAppleAuthorize: () => void
-  onAppleUnauthorize: () => void
-
-  // YouTube Music
-  youtubeToken: string | null
-  youtubeUser: YouTubeUser | null
-  onYouTubeAuth: () => void
-  onYouTubeLogout: () => void
-
-  goToStep: (step: number) => void
-}
+import {
+  Platform,
+  SpotifyUser,
+  YouTubeUser,
+  AppleMusicUser,
+  Step1AuthCardProps,
+} from '@/types/auth'
 
 function getPlatformLabel(p: Platform) {
   if (p === 'spotify') return 'Spotify'
@@ -60,7 +15,7 @@ function getPlatformLabel(p: Platform) {
   return 'YouTube Music'
 }
 
-export default function Step1UnifiedCard(props: Props) {
+export default function Step1AuthCard(props: Step1AuthCardProps) {
   const {
     t,
     selectedPlatform,
@@ -190,30 +145,10 @@ export default function Step1UnifiedCard(props: Props) {
             </div>
           </Button>
         </div>
-
-        {/* 선택은 했지만 미인증 상태: 해당 플랫폼 인증 버튼 */}
-        {/* {selectedPlatform && !isAuthorizedForSelected && (
-            <div className="space-y-3">
-              <div className="text-sm">
-                {getPlatformLabel(selectedPlatform)}
-              </div>
-              <Button className="w-full" onClick={handleAuth}>
-                {t('steps.step1.button')} {getPlatformLabel(selectedPlatform)}
-              </Button>
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => onPlatformSelect(null)}
-              >
-                {t('steps.step1.logout')}
-              </Button>
-            </div>
-          )} */}
       </div>
     )
   }
 
-  // 인증됨: 프로필 뷰 표시 (요청 디자인 반영)
   const platformLogoSrc =
     selectedPlatform === 'spotify'
       ? '/spotify-logo.svg'

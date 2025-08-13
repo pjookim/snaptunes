@@ -1,4 +1,4 @@
-import { SongInfo } from '@/app/ocr'
+import { SongInfo } from './song'
 import { SpotifyTrack } from '@/app/spotify-api'
 
 type SavedState = {

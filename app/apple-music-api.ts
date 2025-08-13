@@ -1,6 +1,6 @@
 // Apple Music API 연동
 
-import { SongInfo } from './ocr'
+import { SongInfo } from '@/types/song'
 
 export interface AppleMusicTrack {
   id: string

@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useSearchParams, useParams } from 'next/navigation'
 import {
@@ -27,11 +26,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
-import Step1UnifiedCard from '@/components/Step1UnifiedCard'
-import Step2OcrCard from '@/components/Step2OcrCard'
+import Step1AuthCard from '@/components/Step1AuthCard'
+import Step2ExtractCard from '@/components/Step2ExtractCard'
 import Step3SearchCard from '@/components/Step3SearchCard'
 import Step4PlaylistCard from '@/components/Step4PlaylistCard'
-import { refreshSpotifyToken, getSpotifyUserInfo } from '@/lib/api/spotify'
+import { getSpotifyUserInfo } from '@/lib/api/spotify'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import { useAppleMusicAuth } from '@/hooks/useAppleMusicAuth'
 import { useYouTubeMusicAuth } from '@/hooks/useYouTubeMusicAuth'
@@ -40,17 +39,11 @@ import { useStepState } from '@/hooks/useStepState'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useCardAnimation } from '@/hooks/useCardAnimation'
 import { NEO_CARD_COLORS } from '@/lib/constants/neo-color'
+import Link from 'next/link'
+import Image from 'next/image'
 
 // 통합된 트랙 타입 정의
 type Track = SpotifyTrack | AppleMusicTrack | YouTubeMusicTrack
-
-// YouTube 사용자 정보 타입 정의
-interface YouTubeUser {
-  id: string
-  displayName: string
-  email?: string
-  imageUrl?: string
-}
 
 function getAccessTokenFromUrl(): { spotify?: string; youtube?: string } {
   if (typeof window === 'undefined') return {}
@@ -75,86 +68,6 @@ function setStepInUrl(step: number) {
   const url = new URL(window.location.href)
   url.searchParams.set('step', step.toString())
   window.history.replaceState({}, document.title, url.toString())
-}
-
-// Spotify 토큰 관련 함수들
-function saveSpotifyTokens(
-  accessToken: string,
-  refreshToken: string,
-  expiresAt: number,
-) {
-  if (typeof window === 'undefined') return
-  try {
-    const tokens = {
-      accessToken,
-      refreshToken,
-      expiresAt,
-      timestamp: Date.now(),
-    }
-    localStorage.setItem('snaptunes_spotify_tokens', JSON.stringify(tokens))
-  } catch (error) {
-    console.warn('Failed to save Spotify tokens:', error)
-  }
-}
-
-function loadSpotifyTokens() {
-  if (typeof window === 'undefined') return null
-  try {
-    const saved = localStorage.getItem('snaptunes_spotify_tokens')
-    return saved ? JSON.parse(saved) : null
-  } catch (error) {
-    console.warn('Failed to load Spotify tokens:', error)
-    return null
-  }
-}
-
-function clearSpotifyTokens() {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.removeItem('snaptunes_spotify_tokens')
-  } catch (error) {
-    console.warn('Failed to clear Spotify tokens:', error)
-  }
-}
-
-// YouTube 토큰 관련 함수들
-function saveYouTubeTokens(
-  accessToken: string,
-  refreshToken: string,
-  expiresAt: number,
-) {
-  if (typeof window === 'undefined') return
-  try {
-    const tokens = {
-      accessToken,
-      refreshToken,
-      expiresAt,
-      timestamp: Date.now(),
-    }
-    localStorage.setItem('snaptunes_youtube_tokens', JSON.stringify(tokens))
-  } catch (error) {
-    console.warn('Failed to save YouTube tokens:', error)
-  }
-}
-
-function loadYouTubeTokens() {
-  if (typeof window === 'undefined') return null
-  try {
-    const saved = localStorage.getItem('snaptunes_youtube_tokens')
-    return saved ? JSON.parse(saved) : null
-  } catch (error) {
-    console.warn('Failed to load YouTube tokens:', error)
-    return null
-  }
-}
-
-function clearYouTubeTokens() {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.removeItem('snaptunes_youtube_tokens')
-  } catch (error) {
-    console.warn('Failed to clear YouTube tokens:', error)
-  }
 }
 
 export default function Home() {
@@ -296,7 +209,7 @@ export default function Home() {
     {
       color: NEO_CARD_COLORS[0],
       content: (
-        <Step1UnifiedCard
+        <Step1AuthCard
           t={t}
           selectedPlatform={selectedPlatform}
           onPlatformSelect={(p) => {
@@ -327,10 +240,7 @@ export default function Home() {
             window.location.href = '/api/auth/youtube-music'
           }}
           onYouTubeLogout={() => {
-            // 로컬 유튜브 토큰 제거
-            try {
-              localStorage.removeItem('snaptunes_youtube_tokens')
-            } catch {}
+            // YouTube 훅에서 토큰 제거 처리
             setYouTubeToken(null)
             setYouTubeUser(null)
             handlePlatformReset()
@@ -343,7 +253,7 @@ export default function Home() {
     {
       color: NEO_CARD_COLORS[1],
       content: (
-        <Step2OcrCard
+        <Step2ExtractCard
           t={t}
           step={step}
           text={text}
@@ -456,8 +366,7 @@ export default function Home() {
       if (urlTokens.spotify) {
         const urlRefreshToken = url.searchParams.get('spotify_refresh_token')
         if (urlRefreshToken) {
-          const expiresAt = Date.now() + 3600 * 1000 // 1시간 후 만료
-          saveSpotifyTokens(urlTokens.spotify, urlRefreshToken, expiresAt)
+          // Spotify 훅에서 자동으로 처리되므로 토큰만 설정
           setSpotifyToken(urlTokens.spotify)
           saveSelectedPlatform('spotify')
           setSelectedPlatform('spotify')
@@ -469,8 +378,7 @@ export default function Home() {
       if (urlTokens.youtube) {
         const urlRefreshToken = url.searchParams.get('youtube_refresh_token')
         if (urlRefreshToken) {
-          const expiresAt = Date.now() + 3600 * 1000 // 1시간 후 만료
-          saveYouTubeTokens(urlTokens.youtube, urlRefreshToken, expiresAt)
+          // YouTube 훅에서 자동으로 처리되므로 토큰만 설정
           setYouTubeToken(urlTokens.youtube)
           saveSelectedPlatform('youtube-music')
           setSelectedPlatform('youtube-music')
@@ -486,74 +394,6 @@ export default function Home() {
         url.searchParams.delete('youtube_refresh_token')
         window.history.replaceState({}, document.title, url.toString())
         return
-      }
-
-      // 2. localStorage에서 Spotify 토큰 확인 및 리프레시
-      const savedSpotifyTokens = loadSpotifyTokens()
-      if (
-        savedSpotifyTokens &&
-        savedSpotifyTokens.accessToken &&
-        savedSpotifyTokens.refreshToken
-      ) {
-        const now = Date.now()
-        if (savedSpotifyTokens.expiresAt > now + 5 * 60 * 1000) {
-          setSpotifyToken(savedSpotifyTokens.accessToken)
-        } else {
-          const refreshed = await refreshSpotifyToken(
-            savedSpotifyTokens.refreshToken,
-          )
-          if (refreshed) {
-            const newExpiresAt = Date.now() + refreshed.expiresIn * 1000
-            saveSpotifyTokens(
-              refreshed.accessToken,
-              refreshed.refreshToken,
-              newExpiresAt,
-            )
-            setSpotifyToken(refreshed.accessToken)
-          } else {
-            clearSpotifyTokens()
-          }
-        }
-      }
-
-      // 3. localStorage에서 YouTube 토큰 확인 및 리프레시
-      const savedYouTubeTokens = loadYouTubeTokens()
-      if (
-        savedYouTubeTokens &&
-        savedYouTubeTokens.accessToken &&
-        savedYouTubeTokens.refreshToken
-      ) {
-        const now = Date.now()
-        if (savedYouTubeTokens.expiresAt > now + 5 * 60 * 1000) {
-          setYouTubeToken(savedYouTubeTokens.accessToken)
-        } else {
-          const refreshed = await (async () => {
-            try {
-              const res = await fetch('/api/auth/youtube-music/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  refreshToken: savedYouTubeTokens.refreshToken,
-                }),
-              })
-              if (!res.ok) return null
-              return await res.json()
-            } catch {
-              return null
-            }
-          })()
-          if (refreshed) {
-            const newExpiresAt = Date.now() + refreshed.expires_in * 1000
-            saveYouTubeTokens(
-              refreshed.access_token,
-              refreshed.refresh_token || savedYouTubeTokens.refreshToken,
-              newExpiresAt,
-            )
-            setYouTubeToken(refreshed.access_token)
-          } else {
-            clearYouTubeTokens()
-          }
-        }
       }
     }
 
@@ -894,19 +734,19 @@ export default function Home() {
       {/* 개인정보처리방침 및 이용약관 링크 - 첫 번째 스텝에서만 활성화 */}
       {step === 1 && (
         <div className="w-full flex justify-center gap-2 text-sm">
-          <a
+          <Link
             href={`/${params.locale}/privacy`}
             className="font-bold hover:underline"
           >
             {t('privacy.title')}
-          </a>
+          </Link>
           {' | '}
-          <a
+          <Link
             href={`/${params.locale}/terms`}
             className="font-bold hover:underline"
           >
             {t('terms.title')}
-          </a>
+          </Link>
         </div>
       )}
     </main>

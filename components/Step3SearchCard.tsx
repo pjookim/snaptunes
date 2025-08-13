@@ -2,20 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { Progress } from '@/components/ui/progress'
-
-interface Track {
-  id: string
-  title: string
-  artist: string
-  albumArt?: string
-  found?: boolean
-}
+import { SpotifyTrack } from '@/app/spotify-api'
 
 interface Step3SearchCardProps {
   t: (key: string) => string
   step: number
   selectedPlatform: 'spotify' | 'apple-music' | 'youtube-music' | null
-  tracks: Track[]
+  tracks: SpotifyTrack[]
   selectedTrackIds: string[]
   handleTrackCheckbox: (trackId: string) => void
   isSearched: boolean

@@ -1,4 +1,4 @@
-import { SongInfo } from './ocr'
+import { SongInfo } from '@/types/song'
 
 export interface SpotifyTrack {
   id: string

@@ -2,19 +2,7 @@ import React from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-
-interface PlaylistMeta {
-  cover?: string | null
-  playlistUrl?: string | null
-  name: string
-  ownerName?: string
-  ownerUrl?: string | null
-}
-
-interface Track {
-  id: string
-  found?: boolean
-}
+import { CreatedPlaylistInfo, SpotifyTrack } from '@/app/spotify-api'
 
 interface Step4PlaylistCardProps {
   t: (key: string) => string
@@ -24,11 +12,11 @@ interface Step4PlaylistCardProps {
   setPlaylistName: (name: string) => void
   isLoading: boolean
   isAuthorized: boolean
-  tracks: Track[]
+  tracks: SpotifyTrack[]
   selectedTrackIds: string[]
   handleCreatePlaylist: () => Promise<void>
   playlistUrl: string | null
-  playlistMeta: PlaylistMeta | null
+  playlistMeta: CreatedPlaylistInfo | null
 }
 
 const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({

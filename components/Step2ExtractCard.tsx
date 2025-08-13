@@ -1,16 +1,11 @@
 import React from 'react'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ImageDropzone from './ImageDropzone'
+import { SongInfo } from '@/types/song'
 
-interface SongInfo {
-  title: string
-  artist?: string
-}
-
-interface Step2OcrCardProps {
+interface Step2ExtractCardProps {
   t: (key: string) => string
   step: number
   text: string
@@ -30,7 +25,7 @@ interface Step2OcrCardProps {
   locale: string
 }
 
-const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
+const Step2ExtractCard: React.FC<Step2ExtractCardProps> = ({
   t,
   step,
   text,
@@ -194,4 +189,4 @@ const Step2OcrCard: React.FC<Step2OcrCardProps> = ({
   )
 }
 
-export default Step2OcrCard
+export default Step2ExtractCard
