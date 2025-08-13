@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
   // Apple Music Developer Token을 한 번만 가져오기 (성능 최적화)
   let developerToken: string
   try {
-    const devTokenRes = await fetch(`${req.nextUrl.origin}/api/auth/apple-music`)
+    const devTokenRes = await fetch(
+      `${req.nextUrl.origin}/api/auth/apple-music`,
+    )
     if (!devTokenRes.ok) {
       throw new Error('Developer Token을 가져올 수 없습니다')
     }
@@ -62,23 +64,25 @@ export async function POST(req: NextRequest) {
     console.error('Developer Token fetch error:', error)
     return NextResponse.json(
       { error: 'Apple Music Developer Token을 가져올 수 없습니다' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 
   const results = []
   const totalSongs = songs.length
-  
+
   console.log(`Starting Apple Music search for ${totalSongs} songs...`)
 
   for (let i = 0; i < songs.length; i++) {
     const song = songs[i]
     const currentProgress = i + 1
-    
+
     try {
       // 진행률 로깅 (프론트엔드에서 이 정보를 사용할 수 있도록)
-      console.log(`[${currentProgress}/${totalSongs}] Searching for: ${song.title} - ${song.artist}`)
-      
+      console.log(
+        `[${currentProgress}/${totalSongs}] Searching for: ${song.title} - ${song.artist}`,
+      )
+
       const term = encodeURIComponent(`${song.title} ${song.artist}`.trim())
       const url = `https://api.music.apple.com/v1/catalog/us/search?term=${term}&types=songs&limit=1`
 
@@ -86,8 +90,8 @@ export async function POST(req: NextRequest) {
       // - Developer Token: Authorization 헤더에 사용
       // - User Token: Music-User-Token 헤더에 사용 (사용자별 콘텐츠 접근용)
       const headers: Record<string, string> = {
-        'Authorization': `Bearer ${developerToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${developerToken}`,
+        'Content-Type': 'application/json',
       }
 
       // User Token이 있으면 Music-User-Token 헤더에 추가
@@ -100,7 +104,12 @@ export async function POST(req: NextRequest) {
       const searchTime = Date.now() - startTime
 
       if (!res.ok) {
-        console.error(`[${currentProgress}/${totalSongs}] Search failed for "${song.title}":`, res.status, res.statusText, `(${searchTime}ms)`)
+        console.error(
+          `[${currentProgress}/${totalSongs}] Search failed for "${song.title}":`,
+          res.status,
+          res.statusText,
+          `(${searchTime}ms)`,
+        )
         const errorText = await res.text()
         console.error('Error response:', errorText)
         results.push({ ...song, found: false })
@@ -109,10 +118,10 @@ export async function POST(req: NextRequest) {
 
       const data: AppleMusicSearchResponse = await res.json()
       const foundTrack = data.results.songs?.data?.[0]
-      
+
       if (foundTrack) {
         const artworkUrl = foundTrack.attributes.artwork?.url
-        const formattedArtworkUrl = artworkUrl 
+        const formattedArtworkUrl = artworkUrl
           ? artworkUrl.replace('{w}', '300').replace('{h}', '300')
           : undefined
 
@@ -123,28 +132,37 @@ export async function POST(req: NextRequest) {
           albumArt: formattedArtworkUrl,
           found: true,
         }
-        
-        console.log(`[${currentProgress}/${totalSongs}] Found track: ${result.title} - ${result.artist} (${searchTime}ms)`)
+
+        console.log(
+          `[${currentProgress}/${totalSongs}] Found track: ${result.title} - ${result.artist} (${searchTime}ms)`,
+        )
         results.push(result)
       } else {
-        console.log(`[${currentProgress}/${totalSongs}] No track found for: ${song.title} - ${song.artist} (${searchTime}ms)`)
+        console.log(
+          `[${currentProgress}/${totalSongs}] No track found for: ${song.title} - ${song.artist} (${searchTime}ms)`,
+        )
         results.push({ ...song, found: false })
       }
     } catch (error) {
-      console.error(`[${currentProgress}/${totalSongs}] Error searching for "${song.title}":`, error)
+      console.error(
+        `[${currentProgress}/${totalSongs}] Error searching for "${song.title}":`,
+        error,
+      )
       results.push({ ...song, found: false })
     }
   }
 
-  const foundCount = results.filter(r => r.found).length
-  console.log(`Apple Music search completed. Found ${foundCount}/${totalSongs} tracks`)
-  
-  return NextResponse.json({ 
+  const foundCount = results.filter((r) => r.found).length
+  console.log(
+    `Apple Music search completed. Found ${foundCount}/${totalSongs} tracks`,
+  )
+
+  return NextResponse.json({
     results,
     summary: {
       total: totalSongs,
       found: foundCount,
-      notFound: totalSongs - foundCount
-    }
+      notFound: totalSongs - foundCount,
+    },
   })
-} 
+}

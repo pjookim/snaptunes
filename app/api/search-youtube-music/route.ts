@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${query}&maxResults=5&videoEmbeddable=true&videoSyndicated=true&key=${process.env.YOUTUBE_API_KEY}`
 
     const res = await fetch(url, {
-      headers: { 
+      headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
       const channel = (it.snippet?.channelTitle || '').toLowerCase()
       let score = 0
       // 공식 아티스트 채널 또는 Topic 채널 가점
-      if (channel.includes(' - topic') || channel.includes('official')) score += 3
+      if (channel.includes(' - topic') || channel.includes('official'))
+        score += 3
       // 제목에 "official", "audio", "lyric", "mv" 등의 키워드 가점/감점
       if (title.includes('official')) score += 2
       if (title.includes('audio')) score += 2
@@ -74,8 +75,9 @@ export async function POST(req: NextRequest) {
     const best = scored[0]?.it
 
     if (best && best.id?.videoId) {
-      const thumbnailUrl = best.snippet.thumbnails?.medium?.url || 
-                          best.snippet.thumbnails?.default?.url
+      const thumbnailUrl =
+        best.snippet.thumbnails?.medium?.url ||
+        best.snippet.thumbnails?.default?.url
 
       results.push({
         id: best.id.videoId,
@@ -90,4 +92,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ results })
-} 
+}

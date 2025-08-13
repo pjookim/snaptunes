@@ -93,10 +93,7 @@ const Step4PlaylistCard: React.FC<Step4PlaylistCardProps> = ({
         variant="neutral"
         onClick={handleCreatePlaylist}
         disabled={
-          isLoading ||
-          !isAuthorized ||
-          foundTracks.length === 0 ||
-          step !== 4
+          isLoading || !isAuthorized || foundTracks.length === 0 || step !== 4
         }
         className="w-full"
       >

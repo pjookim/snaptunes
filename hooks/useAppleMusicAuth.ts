@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 // MusicKit 타입 정의
 interface MusicKitConfiguration {
@@ -282,6 +283,7 @@ export function useAppleMusicAuth() {
         // 이미 인증된 경우 사용자 정보 가져오기
         const userInfo = await fetchUserInfo()
         setUserInfo(userInfo)
+        toast.success('Apple Music이 이미 인증되어 있습니다.')
         return music.musicUserToken ?? null
       }
 
@@ -337,6 +339,7 @@ export function useAppleMusicAuth() {
         const userInfo = await fetchUserInfo()
         setUserInfo(userInfo)
 
+        toast.success('Apple Music 로그인에 성공했습니다!')
         return musicUserToken
       } else {
         throw new Error('사용자가 인증을 취소했습니다.')
@@ -346,6 +349,22 @@ export function useAppleMusicAuth() {
         e instanceof Error ? e.message : '인증에 실패했습니다'
       console.error('authorize error', e)
       setError(errorMessage)
+
+      // 에러 메시지 표시
+      if (errorMessage.includes('취소')) {
+        toast.error('Apple Music 로그인이 취소되었습니다.')
+      } else if (errorMessage.includes('거부')) {
+        toast.error(
+          'Apple Music 접근이 거부되었습니다. 설정에서 권한을 허용해주세요.',
+        )
+      } else if (errorMessage.includes('제한')) {
+        toast.error('Apple Music 접근이 제한되었습니다.')
+      } else if (errorMessage.includes('준비중')) {
+        toast.error('MusicKit이 준비중입니다. 잠시 후 다시 시도해주세요.')
+      } else {
+        toast.error(`Apple Music 인증 오류: ${errorMessage}`)
+      }
+
       return null
     } finally {
       setIsLoading(false)
@@ -361,6 +380,7 @@ export function useAppleMusicAuth() {
         console.log('No MusicKit instance found, clearing state only')
         setIsAuthorized(false)
         setUserInfo(null)
+        toast.success('Apple Music 로그아웃되었습니다.')
         return
       }
 
@@ -402,6 +422,7 @@ export function useAppleMusicAuth() {
       setMusicKitInstance(null)
 
       console.log('Apple Music logout completed successfully')
+      toast.success('Apple Music 로그아웃되었습니다.')
     } catch (e: unknown) {
       console.error('Apple Music logout error:', e)
       // 에러가 발생해도 로컬 상태는 초기화
@@ -409,6 +430,7 @@ export function useAppleMusicAuth() {
       setUserInfo(null)
       musicRef.current = null
       setMusicKitInstance(null)
+      toast.error('Apple Music 로그아웃 중 오류가 발생했습니다.')
     }
   }
 

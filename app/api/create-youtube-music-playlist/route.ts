@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
     const channelRes = await fetch(
       'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
       {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     )
 
     if (!channelRes.ok) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             privacyStatus: 'private',
           },
         }),
-      }
+      },
     )
 
     if (!playlistRes.ok) {
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
                 },
               },
             }),
-          }
+          },
         )
       } catch (error) {
         console.error(`Failed to add video ${videoId} to playlist:`, error)
@@ -113,17 +113,18 @@ export async function POST(req: NextRequest) {
         const videoRes = await fetch(
           `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${tracks[0]}`,
           {
-            headers: { 
+            headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         )
         if (videoRes.ok) {
           const videoData = await videoRes.json()
           const video = videoData.items?.[0]
           if (video) {
-            thumbnailUrl = video.snippet.thumbnails?.medium?.url || 
-                          video.snippet.thumbnails?.default?.url
+            thumbnailUrl =
+              video.snippet.thumbnails?.medium?.url ||
+              video.snippet.thumbnails?.default?.url
           }
         }
       } catch (error) {
@@ -138,7 +139,6 @@ export async function POST(req: NextRequest) {
       ownerName: channel.snippet?.title || 'YouTube Music User',
       ownerUrl: `https://www.youtube.com/channel/${channel.id}`,
     })
-
   } catch (error) {
     console.error('YouTube Music playlist creation error:', error)
     return NextResponse.json(
@@ -146,4 +146,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     )
   }
-} 
+}

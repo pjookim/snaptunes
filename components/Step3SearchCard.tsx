@@ -39,13 +39,17 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
 
   // Apple Music 검색 진행률 시뮬레이션 (실제로는 API에서 진행률을 받아와야 함)
   useEffect(() => {
-    if (isLoading && selectedPlatform === 'apple-music' && tracks.length === 0) {
+    if (
+      isLoading &&
+      selectedPlatform === 'apple-music' &&
+      tracks.length === 0
+    ) {
       setSearchProgress(0)
       setSearchStatus('Apple Music 검색 준비 중...')
-      
+
       // 진행률 시뮬레이션 (실제로는 API 응답에서 진행률을 받아와야 함)
       const interval = setInterval(() => {
-        setSearchProgress(prev => {
+        setSearchProgress((prev) => {
           if (prev >= 90) {
             clearInterval(interval)
             return 90
@@ -99,13 +103,14 @@ const Step3SearchCard: React.FC<Step3SearchCardProps> = ({
       {isLoading && selectedPlatform === 'apple-music' && (
         <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-blue-800">Apple Music 검색 진행률</span>
-            <span className="text-sm text-blue-600">{Math.round(searchProgress)}%</span>
+            <span className="font-semibold text-blue-800">
+              Apple Music 검색 진행률
+            </span>
+            <span className="text-sm text-blue-600">
+              {Math.round(searchProgress)}%
+            </span>
           </div>
-          <Progress 
-            value={searchProgress} 
-            className="w-full h-3 bg-blue-100"
-          />
+          <Progress value={searchProgress} className="w-full h-3 bg-blue-100" />
           <div className="mt-2 text-sm text-blue-700">
             {searchStatus}
             {searchProgress > 0 && searchProgress < 100 && (

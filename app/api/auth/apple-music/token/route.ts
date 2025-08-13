@@ -4,11 +4,11 @@ import jwt from 'jsonwebtoken'
 export async function POST(req: NextRequest) {
   try {
     const { userToken } = await req.json()
-    
+
     if (!userToken) {
       return NextResponse.json(
         { error: 'User token is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!teamId || !keyId || !privateKey) {
       return NextResponse.json(
         { error: 'Apple Music 설정이 완료되지 않았습니다' },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     console.error('Apple Music token generation error:', error)
     return NextResponse.json(
       { error: '토큰 생성 중 오류가 발생했습니다' },
-      { status: 500 }
+      { status: 500 },
     )
   }
-} 
+}

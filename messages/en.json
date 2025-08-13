@@ -122,5 +122,79 @@
     "appleMusicDescription": "Apple's premium music service",
     "youtubeDescription": "Google's music streaming service",
     "privacy": "Your privacy is safely protected"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: August 2025",
+    "introduction": "SnapTunes prioritizes the protection of your personal information. This Privacy Policy explains how personal information is collected, used, and protected when using SnapTunes services.",
+    "sections": {
+      "collection": {
+        "title": "1. Personal Information We Collect",
+        "content": "SnapTunes may collect the following information to provide services:\n• Music service authentication information (Spotify, Apple Music, YouTube Music)\n• Uploaded images and text (not stored on SnapTunes server, sent to OpenAI API for real-time processing and discarded)\n• Service usage records and playlist creation information\n• Device information and access logs"
+      },
+      "usage": {
+        "title": "2. How We Use Personal Information",
+        "content": "Collected personal information is used only for the following purposes:\n• Music service integration and playlist creation\n• Service quality improvement and user experience enhancement\n• Customer support and inquiry response\n• Legal obligation compliance"
+      },
+      "sharing": {
+        "title": "3. Sharing and Disclosure of Personal Information",
+        "content": "SnapTunes does not provide your personal information to third parties except in the following cases:\n• When you give explicit consent\n• When required by law\n• When sharing minimal necessary information with music service providers for service delivery\n• When sending images and text to OpenAI API for analysis (not stored)"
+      },
+      "security": {
+        "title": "4. Personal Information Protection Measures",
+        "content": "We implement the following security measures to protect personal information:\n• Encrypted communication and data storage\n• Access control and monitoring\n• Regular security audits and updates"
+      },
+      "retention": {
+        "title": "5. Personal Information Retention and Disposal",
+        "content": "Personal information is disposed of immediately after the purpose of service provision is achieved. However, it may be retained for the period required by relevant laws and regulations."
+      },
+      "rights": {
+        "title": "6. Your Rights",
+        "content": "You have the following rights:\n• Request to access and correct personal information\n• Request to delete personal information\n• Request to stop processing personal information\n• Request to transfer personal information"
+      },
+      "contact": {
+        "title": "7. Inquiries and Contact Information",
+        "content": "If you have any questions regarding personal information processing, please contact us at:\n• Email: snaptunesapp@gmail.com\n• This Privacy Policy may be modified for service improvements, and significant changes will be notified in advance."
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last Updated: August 2025",
+    "introduction": "Thank you for using SnapTunes services. These Terms of Service define the conditions and rules related to using SnapTunes services.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "content": "By using this service, you are deemed to have agreed to these Terms of Service. If you do not agree to the terms, you must discontinue using the service."
+      },
+      "service": {
+        "title": "2. Service Description",
+        "content": "SnapTunes provides the following services:\n• Automatic music playlist generation based on images and text\n• Integration with various music services (Spotify, Apple Music, YouTube Music)\n• AI-based music recommendations and analysis"
+      },
+      "usage": {
+        "title": "3. Service Usage Rules",
+        "content": "When using the service, you must comply with the following:\n• Respect copyright and intellectual property rights\n• Do not infringe on others' rights\n• Do not interfere with normal service operation\n• Do not upload illegal or inappropriate content"
+      },
+      "accounts": {
+        "title": "4. Accounts and Authentication",
+        "content": "Music service integration requires authentication with the respective service accounts. Users must securely manage their account information and prevent unauthorized use."
+      },
+      "liability": {
+        "title": "5. Liability and Disclaimers",
+        "content": "SnapTunes is not liable in the following cases:\n• Damages due to user negligence\n• Failures or errors of third-party music services\n• Service interruption due to force majeure"
+      },
+      "intellectual": {
+        "title": "6. Intellectual Property Rights",
+        "content": "All intellectual property rights related to SnapTunes services belong to SnapTunes. Users are prohibited from unauthorized copying, distribution, or modification of the service."
+      },
+      "modification": {
+        "title": "7. Terms Modification",
+        "content": "These terms may be modified for service improvements. Significant changes will be notified in advance, and modified terms take effect immediately upon notification."
+      },
+      "governing": {
+        "title": "8. Governing Law and Jurisdiction",
+        "content": "These terms are interpreted according to the laws of the Republic of Korea."
+      }
+    }
   }
 }

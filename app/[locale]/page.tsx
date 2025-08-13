@@ -891,6 +891,24 @@ export default function Home() {
           </Card>
         </div>
       </div>
+      {/* 개인정보처리방침 및 이용약관 링크 - 첫 번째 스텝에서만 활성화 */}
+      {step === 1 && (
+        <div className="w-full flex justify-center gap-2 text-sm">
+          <a
+            href={`/${params.locale}/privacy`}
+            className="font-bold hover:underline"
+          >
+            {t('privacy.title')}
+          </a>
+          {' | '}
+          <a
+            href={`/${params.locale}/terms`}
+            className="font-bold hover:underline"
+          >
+            {t('terms.title')}
+          </a>
+        </div>
+      )}
     </main>
   )
 }
